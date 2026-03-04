@@ -1,5 +1,5 @@
 <template>
-  <nav class="bg-gray-900 text-white">
+  <nav class="fixed top-0 left-0 w-full bg-slate-900 text-white z-50">
     <div class="max-w-6xl mx-auto px-4">
       <div class="flex justify-between items-center h-16">
         <h1 class="text-xl font-bold">Alan's Website</h1>
