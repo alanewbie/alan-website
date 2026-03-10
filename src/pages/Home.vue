@@ -31,34 +31,16 @@
     <section class="pt-36 pb-20 border-t bg-black text-white">
       <div :ref="(el) => setRevealEl(el)" class="reveal max-w-5xl mx-auto px-6 text-center">
         <h2 class="text-4xl font-semibold mb-8">About Me</h2>
-
-        <p class="text-gray-300 leading-relaxed max-w-3xl mx-auto mb-10">
-          I'm a hybrid
-          <span class="text-white font-medium">Technical Presales and AI Engineer</span>
-          with experience delivering enterprise AI and SaaS solutions across Asia and Australia. I
-          have worked with companies such as
-          <span class="text-white">Amgen, Carrefour, Denso, and Taipei 101</span>, helping them
-          adopt conversational AI, cloud integrations, and scalable digital platforms.
-        </p>
-
-        <p class="text-gray-400 leading-relaxed max-w-3xl mx-auto mb-12">
-          Currently completing my Master of Information Technology at Monash University with
-          Distinction, where my thesis focuses on building an
-          <span class="text-white">LLM evaluation benchmark for Australian contract law</span>
-          using RAG pipelines, LangChain, and FAISS.
-        </p>
-
         <div class="grid md:grid-cols-3 gap-8 text-left">
           <div>
             <h3 class="text-lg font-semibold mb-3">AI & Engineering</h3>
             <ul class="text-gray-400 space-y-2 text-sm">
+              <li>• Java, Python, JavaScript</li>
               <li>• Retrieval-Augmented Generation (RAG)</li>
               <li>• LLM Evaluation & Benchmarking</li>
               <li>• LangChain / OpenAI API</li>
-              <li>• Python, Java, JavaScript</li>
             </ul>
           </div>
-
           <div>
             <h3 class="text-lg font-semibold mb-3">Cloud & Platforms</h3>
             <ul class="text-gray-400 space-y-2 text-sm">
@@ -68,7 +50,6 @@
               <li>• Database & Backend Systems</li>
             </ul>
           </div>
-
           <div>
             <h3 class="text-lg font-semibold mb-3">Business & Consulting</h3>
             <ul class="text-gray-400 space-y-2 text-sm">
@@ -152,7 +133,7 @@
                 @click="closeLightbox"
                 aria-label="Close"
               >
-                ✕
+                X
               </button>
 
               <!-- Prev -->
@@ -161,7 +142,7 @@
                 @click.stop="prevImage"
                 aria-label="Previous"
               >
-                ‹
+                <
               </button>
 
               <!-- Next -->
@@ -170,7 +151,7 @@
                 @click.stop="nextImage"
                 aria-label="Next"
               >
-                ›
+                >
               </button>
             </div>
             <div class="max-h-[calc(85vh-52px)] overflow-auto p-4 flex items-center justify-center">
@@ -266,7 +247,7 @@ const highlights = [
     tags: ['Azure OpenAI', 'Workshop', 'Speaking'],
   },
   {
-    title: 'Smart City Expo Pitch (2021)',
+    title: 'Smart City Expo Pitch',
     description: 'Represented company to introduce our chatbot product (online + offline).',
     src: new URL('../assets/2021SmartCityExpo.png', import.meta.url).href,
     tags: ['Pitch', 'Chatbot', 'Product'],
@@ -318,10 +299,7 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
-  // ✅ start typing
   typeEffect()
-
-  // ✅ wait for v-for refs collected, then observe
   await nextTick()
 
   observer = new IntersectionObserver(

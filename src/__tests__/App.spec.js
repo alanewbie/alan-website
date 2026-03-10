@@ -5,7 +5,15 @@ import App from '../App.vue'
 
 describe('App', () => {
   it('mounts renders properly', () => {
-    const wrapper = mount(App)
-    expect(wrapper.text()).toContain('You did it!')
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          'router-link': { template: '<a><slot /></a>' },
+          'router-view': { template: '<div />' },
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain("Alan's Website")
   })
 })

@@ -1,0 +1,422 @@
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import {
+  AIRPORT_ZONE,
+  PHYSICS,
+  PLAYER,
+  PLATFORMS,
+  PORTAL,
+  STAGES,
+  WORLD,
+  clamp,
+  findNextPlayableStage,
+  findStageIndexByX,
+} from './config'
+import { renderScene } from './renderer'
+import { loadCharacterSprites } from './sprites'
+
+function aabbIntersect(ax, ay, aw, ah, bx, by, bw, bh) {
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by
+}
+
+function dist(ax, ay, bx, by) {
+  return Math.hypot(ax - bx, ay - by)
+}
+
+function lerp(start, end, t) {
+  return start + (end - start) * t
+}
+
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+}
+
+export function useAboutGame(canvasRef) {
+  const stageLabel = ref('Spirit Space')
+  const helperLabel = ref('Move with Arrow keys / WASD. Jump: Space.')
+  const modeLabel = ref('Intro')
+
+  const state = {
+    canvas: null,
+    ctx: null,
+    rafId: null,
+    lastTime: 0,
+    mode: 'intro',
+    currentStageIndex: 0,
+    lockedMinX: STAGES[1].start,
+    characterKey: 'spirit',
+    hintText: '',
+    hintTimer: 0,
+    world: {
+      width: WORLD.width,
+      height: WORLD.height,
+      groundY: 0,
+    },
+    camera: {
+      x: 0,
+      y: 0,
+      w: 0,
+      h: 0,
+    },
+    portal: {
+      x: PORTAL.x,
+      y: 0,
+    },
+    player: {
+      x: 120,
+      y: 160,
+      w: PLAYER.width,
+      h: PLAYER.height,
+      vx: 0,
+      vy: 0,
+      onGround: false,
+    },
+    travel: {
+      active: false,
+      timer: 0,
+      duration: 1,
+      fromStage: 1,
+      toStage: 2,
+      startX: 0,
+      startY: 0,
+      endX: 0,
+      endY: 0,
+      planeX: 0,
+      planeY: 0,
+    },
+    sprites: loadCharacterSprites(),
+  }
+
+  const keys = new Set()
+  let jumpHeld = false
+
+  function updateCharacter() {
+    if (state.mode === 'intro') {
+      state.characterKey = 'spirit'
+      return
+    }
+
+    if (state.travel.active) {
+      state.characterKey = 'traveler'
+      return
+    }
+
+    if (state.currentStageIndex === 1) state.characterKey = 'baby'
+    if (state.currentStageIndex === 2) state.characterKey = 'child'
+    if (state.currentStageIndex === 3) state.characterKey = 'student'
+    if (state.currentStageIndex >= 4) state.characterKey = 'master'
+  }
+
+  function showHint(text, duration = 1.2) {
+    state.hintText = text
+    state.hintTimer = duration
+  }
+
+  function tickHint(dt) {
+    if (state.hintTimer <= 0) return
+    state.hintTimer = Math.max(0, state.hintTimer - dt)
+    if (state.hintTimer === 0) {
+      state.hintText = ''
+    }
+  }
+
+  function syncHud() {
+    stageLabel.value = STAGES[state.currentStageIndex].title
+    modeLabel.value = state.mode === 'intro' ? 'Intro' : 'Play'
+
+    if (state.mode === 'intro') {
+      helperLabel.value = 'Fly into the circle and be born.'
+      return
+    }
+
+    if (state.hintText) {
+      helperLabel.value = state.hintText
+      return
+    }
+
+    if (state.travel.active) {
+      helperLabel.value = 'Flying across the ocean...'
+      return
+    }
+
+    if (state.currentStageIndex < STAGES.length - 1) {
+      helperLabel.value = 'Reach the airport at land edge to travel.'
+      return
+    }
+
+    helperLabel.value = 'You reached the current chapter in Melbourne.'
+  }
+
+  function resizeCanvas() {
+    if (!state.canvas || !state.ctx) return
+
+    const dpr = window.devicePixelRatio || 1
+    const rect = state.canvas.getBoundingClientRect()
+
+    state.canvas.width = Math.floor(rect.width * dpr)
+    state.canvas.height = Math.floor(rect.height * dpr)
+    state.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+    state.camera.w = rect.width
+    state.camera.h = rect.height
+    state.world.groundY = state.world.height - WORLD.groundPadding
+    state.portal.y = state.world.groundY - 80
+  }
+
+  function startPlayMode() {
+    state.mode = 'play'
+    state.currentStageIndex = 1
+    state.lockedMinX = STAGES[1].start
+    state.player.x = STAGES[1].start + 90
+    state.player.y = state.world.groundY - state.player.h
+    state.player.vx = 0
+    state.player.vy = 0
+    state.player.onGround = true
+    updateCharacter()
+    syncHud()
+  }
+
+  function startTravel(toStageIndex) {
+    const fromStage = STAGES[state.currentStageIndex]
+    const toStage = STAGES[toStageIndex]
+
+    state.travel.active = true
+    state.travel.timer = 0
+    state.travel.fromStage = state.currentStageIndex
+    state.travel.toStage = toStageIndex
+    state.travel.startX = fromStage.end - 60
+    state.travel.startY = state.world.groundY - 170
+    state.travel.endX = toStage.start + 60
+    state.travel.endY = state.world.groundY - 170
+    state.travel.planeX = state.travel.startX
+    state.travel.planeY = state.travel.startY
+
+    state.player.vx = 0
+    state.player.vy = 0
+    state.player.onGround = false
+    updateCharacter()
+    syncHud()
+  }
+
+  function completeTravel() {
+    state.travel.active = false
+    state.currentStageIndex = state.travel.toStage
+    state.lockedMinX = STAGES[state.currentStageIndex].start
+    state.player.x = STAGES[state.currentStageIndex].start + 90
+    state.player.y = state.world.groundY - state.player.h
+    state.player.vx = 0
+    state.player.vy = 0
+    state.player.onGround = true
+    updateCharacter()
+    syncHud()
+  }
+
+  function updateIntro(dt) {
+    const left = keys.has('ArrowLeft') || keys.has('a') || keys.has('A')
+    const right = keys.has('ArrowRight') || keys.has('d') || keys.has('D')
+    const up = keys.has('ArrowUp') || keys.has('w') || keys.has('W')
+    const down = keys.has('ArrowDown') || keys.has('s') || keys.has('S')
+
+    const flySpeed = 280
+    let vx = 0
+    let vy = 0
+
+    if (left) vx -= flySpeed
+    if (right) vx += flySpeed
+    if (up) vy -= flySpeed
+    if (down) vy += flySpeed
+
+    state.player.x += vx * dt
+    state.player.y += vy * dt
+
+    state.player.x = clamp(state.player.x, 40, STAGES[0].end - state.player.w - 40)
+    state.player.y = clamp(state.player.y, 30, state.world.groundY - state.player.h - 10)
+
+    const centerX = state.player.x + state.player.w / 2
+    const centerY = state.player.y + state.player.h / 2
+    if (dist(centerX, centerY, state.portal.x, state.portal.y) <= PORTAL.radius) {
+      startPlayMode()
+    }
+  }
+
+  function updateTravel(dt) {
+    state.travel.timer += dt
+    const raw = clamp(state.travel.timer / state.travel.duration, 0, 1)
+    const progress = easeInOut(raw)
+
+    state.travel.planeX = lerp(state.travel.startX, state.travel.endX, progress)
+    state.travel.planeY = lerp(state.travel.startY, state.travel.endY, progress) - Math.sin(progress * Math.PI) * 35
+
+    state.player.x = state.travel.planeX - state.player.w * 0.15
+    state.player.y = state.travel.planeY - state.player.h * 0.22
+
+    if (raw >= 1) completeTravel()
+  }
+
+  function updatePlay(dt) {
+    if (state.travel.active) {
+      updateTravel(dt)
+      return
+    }
+
+    const left = keys.has('ArrowLeft') || keys.has('a') || keys.has('A')
+    const right = keys.has('ArrowRight') || keys.has('d') || keys.has('D')
+    const jumpKey = keys.has(' ') || keys.has('ArrowUp') || keys.has('w') || keys.has('W')
+
+    if (left && !right) state.player.vx = -PLAYER.speed
+    else if (right && !left) state.player.vx = PLAYER.speed
+    else state.player.vx *= state.player.onGround ? PHYSICS.frictionGround : PHYSICS.frictionAir
+
+    if (jumpKey && !jumpHeld && state.player.onGround) {
+      state.player.vy = -PLAYER.jumpVelocity
+      state.player.onGround = false
+      jumpHeld = true
+    }
+    if (jumpKey) jumpHeld = true
+
+    state.player.vy += PHYSICS.gravity * dt
+    state.player.vy = Math.min(state.player.vy, PHYSICS.maxFall)
+
+    state.player.x += state.player.vx * dt
+
+    const playerCenter = state.player.x + state.player.w / 2
+    const detectedStageIndex = findStageIndexByX(playerCenter)
+    if (detectedStageIndex >= 1) {
+      state.currentStageIndex = detectedStageIndex
+    }
+
+    const stage = STAGES[state.currentStageIndex]
+    const stageMaxX = stage.end - state.player.w
+
+    if (state.player.x <= state.lockedMinX) {
+      state.player.x = state.lockedMinX
+      if (left) showHint('Life moves on')
+    }
+
+    state.player.x = clamp(state.player.x, state.lockedMinX, stageMaxX)
+
+    const prevY = state.player.y
+    state.player.y += state.player.vy * dt
+
+    const groundTop = state.world.groundY - state.player.h
+    if (state.player.y >= groundTop) {
+      state.player.y = groundTop
+      state.player.vy = 0
+      state.player.onGround = true
+    } else {
+      state.player.onGround = false
+    }
+
+    if (state.player.vy >= 0) {
+      for (const platform of PLATFORMS) {
+        const wasAbove = prevY + state.player.h <= platform.y + 2
+        if (
+          wasAbove &&
+          aabbIntersect(
+            state.player.x,
+            state.player.y,
+            state.player.w,
+            state.player.h,
+            platform.x,
+            platform.y,
+            platform.w,
+            platform.h,
+          )
+        ) {
+          state.player.y = platform.y - state.player.h
+          state.player.vy = 0
+          state.player.onGround = true
+        }
+      }
+    }
+
+    const inAirportZone = state.player.x >= stage.end - AIRPORT_ZONE - 20
+    if (inAirportZone && state.currentStageIndex < STAGES.length - 1 && state.player.onGround && right) {
+      const nextStageIndex = findNextPlayableStage(state.currentStageIndex)
+      startTravel(nextStageIndex)
+    }
+
+    updateCharacter()
+  }
+
+  function updateCamera(dt) {
+    const follow = state.mode === 'intro' ? 8 : 11
+    const targetX = state.player.x + state.player.w / 2 - state.camera.w / 2
+    const targetY = state.mode === 'intro' ? state.player.y + state.player.h / 2 - state.camera.h / 2 : 0
+
+    state.camera.x += (targetX - state.camera.x) * Math.min(1, follow * dt)
+    state.camera.x = clamp(state.camera.x, 0, Math.max(0, state.world.width - state.camera.w))
+
+    if (state.mode === 'intro') {
+      state.camera.y += (targetY - state.camera.y) * Math.min(1, follow * dt)
+      state.camera.y = clamp(state.camera.y, 0, Math.max(0, state.world.height - state.camera.h))
+    } else {
+      state.camera.y = 0
+    }
+  }
+
+  function loop(t) {
+    if (!state.ctx) return
+
+    const dt = Math.min(0.033, (t - state.lastTime) / 1000)
+    state.lastTime = t
+
+    tickHint(dt)
+
+    if (state.mode === 'intro') updateIntro(dt)
+    else updatePlay(dt)
+
+    updateCamera(dt)
+    syncHud()
+    renderScene(state.ctx, state)
+
+    state.rafId = requestAnimationFrame(loop)
+  }
+
+  function onKeyDown(e) {
+    const block = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D']
+    if (block.includes(e.key)) e.preventDefault()
+    keys.add(e.key)
+  }
+
+  function onKeyUp(e) {
+    keys.delete(e.key)
+
+    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+      jumpHeld = false
+    }
+  }
+
+  onMounted(() => {
+    state.canvas = canvasRef.value
+    if (!state.canvas) return
+
+    state.ctx = state.canvas.getContext('2d')
+    if (!state.ctx) return
+
+    window.addEventListener('keydown', onKeyDown, { passive: false })
+    window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('resize', resizeCanvas)
+
+    resizeCanvas()
+    syncHud()
+
+    state.player.x = state.camera.w / 2 - state.player.w / 2
+    state.player.y = state.camera.h / 2 - state.player.h / 2
+
+    state.lastTime = performance.now()
+    state.rafId = requestAnimationFrame(loop)
+  })
+
+  onBeforeUnmount(() => {
+    cancelAnimationFrame(state.rafId)
+    window.removeEventListener('keydown', onKeyDown)
+    window.removeEventListener('keyup', onKeyUp)
+    window.removeEventListener('resize', resizeCanvas)
+  })
+
+  return {
+    stageLabel,
+    helperLabel,
+    modeLabel,
+  }
+}
