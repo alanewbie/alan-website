@@ -1,9 +1,10 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import {
   AIRPORT_ZONE,
+  HOSPITAL,
+  INDONESIA_TERRACES,
   PHYSICS,
   PLAYER,
-  PLATFORMS,
   PORTAL,
   STAGES,
   WORLD,
@@ -13,10 +14,6 @@ import {
 } from './config'
 import { renderScene } from './renderer'
 import { loadCharacterSprites } from './sprites'
-
-function aabbIntersect(ax, ay, aw, ah, bx, by, bw, bh) {
-  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by
-}
 
 function dist(ax, ay, bx, by) {
   return Math.hypot(ax - bx, ay - by)
@@ -28,6 +25,18 @@ function lerp(start, end, t) {
 
 function easeInOut(t) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+}
+
+function getTerraceLiftAtX(playerCenterX, currentStageIndex) {
+  if (STAGES[currentStageIndex]?.id !== 'indonesia') return 0
+
+  const start = INDONESIA_TERRACES.x
+  const end = INDONESIA_TERRACES.x + INDONESIA_TERRACES.width
+  if (playerCenterX <= start || playerCenterX >= end) return 0
+
+  const progress = (playerCenterX - start) / (end - start)
+  const slope = progress <= 0.5 ? progress / 0.5 : (1 - progress) / 0.5
+  return INDONESIA_TERRACES.peakLift * clamp(slope, 0, 1)
 }
 
 export function useAboutGame(canvasRef) {
@@ -46,6 +55,9 @@ export function useAboutGame(canvasRef) {
     characterKey: 'spirit',
     hintText: '',
     hintTimer: 0,
+    time: 0,
+    birthDropActive: false,
+    birthDropX: 0,
     world: {
       width: WORLD.width,
       height: WORLD.height,
@@ -159,18 +171,21 @@ export function useAboutGame(canvasRef) {
     state.camera.w = rect.width
     state.camera.h = rect.height
     state.world.groundY = state.world.height - WORLD.groundPadding
-    state.portal.y = state.world.groundY - 80
+    state.portal.x = STAGES[0].end
+    state.portal.y = state.world.groundY - 200
   }
 
   function startPlayMode() {
     state.mode = 'play'
     state.currentStageIndex = 1
     state.lockedMinX = STAGES[1].start
-    state.player.x = STAGES[1].start + 90
-    state.player.y = state.world.groundY - state.player.h
+    state.player.x = HOSPITAL.x + HOSPITAL.width / 2 - state.player.w / 2
+    state.birthDropX = state.player.x
+    state.birthDropActive = true
+    state.player.y = state.world.groundY - state.player.h - 260
     state.player.vx = 0
     state.player.vy = 0
-    state.player.onGround = true
+    state.player.onGround = false
     updateCharacter()
     syncHud()
   }
@@ -228,7 +243,11 @@ export function useAboutGame(canvasRef) {
     state.player.x += vx * dt
     state.player.y += vy * dt
 
-    state.player.x = clamp(state.player.x, 40, STAGES[0].end - state.player.w - 40)
+    const introMaxX = Math.max(
+      STAGES[0].end - state.player.w - 40,
+      state.portal.x - state.player.w / 2,
+    )
+    state.player.x = clamp(state.player.x, 40, introMaxX)
     state.player.y = clamp(state.player.y, 30, state.world.groundY - state.player.h - 10)
 
     const centerX = state.player.x + state.player.w / 2
@@ -244,7 +263,8 @@ export function useAboutGame(canvasRef) {
     const progress = easeInOut(raw)
 
     state.travel.planeX = lerp(state.travel.startX, state.travel.endX, progress)
-    state.travel.planeY = lerp(state.travel.startY, state.travel.endY, progress) - Math.sin(progress * Math.PI) * 35
+    state.travel.planeY =
+      lerp(state.travel.startY, state.travel.endY, progress) - Math.sin(progress * Math.PI) * 35
 
     state.player.x = state.travel.planeX - state.player.w * 0.15
     state.player.y = state.travel.planeY - state.player.h * 0.22
@@ -255,6 +275,27 @@ export function useAboutGame(canvasRef) {
   function updatePlay(dt) {
     if (state.travel.active) {
       updateTravel(dt)
+      return
+    }
+
+    if (state.birthDropActive) {
+      state.player.vx = 0
+      state.player.x = state.birthDropX
+      state.player.vy += PHYSICS.gravity * dt
+      state.player.vy = Math.min(state.player.vy, PHYSICS.maxFall)
+      state.player.y += state.player.vy * dt
+
+      const groundTop = state.world.groundY - state.player.h
+      if (state.player.y >= groundTop) {
+        state.player.y = groundTop
+        state.player.vy = 0
+        state.player.onGround = true
+        state.birthDropActive = false
+      } else {
+        state.player.onGround = false
+      }
+
+      updateCharacter()
       return
     }
 
@@ -294,10 +335,11 @@ export function useAboutGame(canvasRef) {
 
     state.player.x = clamp(state.player.x, state.lockedMinX, stageMaxX)
 
-    const prevY = state.player.y
     state.player.y += state.player.vy * dt
 
-    const groundTop = state.world.groundY - state.player.h
+    const currentCenterX = state.player.x + state.player.w / 2
+    const terraceLift = getTerraceLiftAtX(currentCenterX, state.currentStageIndex)
+    const groundTop = state.world.groundY - state.player.h - terraceLift
     if (state.player.y >= groundTop) {
       state.player.y = groundTop
       state.player.vy = 0
@@ -306,31 +348,13 @@ export function useAboutGame(canvasRef) {
       state.player.onGround = false
     }
 
-    if (state.player.vy >= 0) {
-      for (const platform of PLATFORMS) {
-        const wasAbove = prevY + state.player.h <= platform.y + 2
-        if (
-          wasAbove &&
-          aabbIntersect(
-            state.player.x,
-            state.player.y,
-            state.player.w,
-            state.player.h,
-            platform.x,
-            platform.y,
-            platform.w,
-            platform.h,
-          )
-        ) {
-          state.player.y = platform.y - state.player.h
-          state.player.vy = 0
-          state.player.onGround = true
-        }
-      }
-    }
-
     const inAirportZone = state.player.x >= stage.end - AIRPORT_ZONE - 20
-    if (inAirportZone && state.currentStageIndex < STAGES.length - 1 && state.player.onGround && right) {
+    if (
+      inAirportZone &&
+      state.currentStageIndex < STAGES.length - 1 &&
+      state.player.onGround &&
+      right
+    ) {
       const nextStageIndex = findNextPlayableStage(state.currentStageIndex)
       startTravel(nextStageIndex)
     }
@@ -341,7 +365,8 @@ export function useAboutGame(canvasRef) {
   function updateCamera(dt) {
     const follow = state.mode === 'intro' ? 8 : 11
     const targetX = state.player.x + state.player.w / 2 - state.camera.w / 2
-    const targetY = state.mode === 'intro' ? state.player.y + state.player.h / 2 - state.camera.h / 2 : 0
+    const targetY =
+      state.mode === 'intro' ? state.player.y + state.player.h / 2 - state.camera.h / 2 : 0
 
     state.camera.x += (targetX - state.camera.x) * Math.min(1, follow * dt)
     state.camera.x = clamp(state.camera.x, 0, Math.max(0, state.world.width - state.camera.w))
@@ -359,6 +384,7 @@ export function useAboutGame(canvasRef) {
 
     const dt = Math.min(0.033, (t - state.lastTime) / 1000)
     state.lastTime = t
+    state.time += dt
 
     tickHint(dt)
 
@@ -373,7 +399,21 @@ export function useAboutGame(canvasRef) {
   }
 
   function onKeyDown(e) {
-    const block = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D']
+    const block = [
+      'ArrowUp',
+      'ArrowDown',
+      'ArrowLeft',
+      'ArrowRight',
+      ' ',
+      'w',
+      'a',
+      's',
+      'd',
+      'W',
+      'A',
+      'S',
+      'D',
+    ]
     if (block.includes(e.key)) e.preventDefault()
     keys.add(e.key)
   }
@@ -384,6 +424,32 @@ export function useAboutGame(canvasRef) {
     if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
       jumpHeld = false
     }
+  }
+
+  function restartGame() {
+    keys.clear()
+    jumpHeld = false
+
+    state.mode = 'intro'
+    state.currentStageIndex = 0
+    state.lockedMinX = STAGES[1].start
+    state.characterKey = 'spirit'
+    state.hintText = ''
+    state.hintTimer = 0
+    state.birthDropActive = false
+    state.birthDropX = 0
+
+    state.travel.active = false
+    state.travel.timer = 0
+
+    state.player.vx = 0
+    state.player.vy = 0
+    state.player.onGround = false
+    state.player.x = state.camera.w / 2 - state.player.w / 2
+    state.player.y = state.camera.h / 2 - state.player.h / 2
+
+    resizeCanvas()
+    syncHud()
   }
 
   onMounted(() => {
@@ -418,5 +484,6 @@ export function useAboutGame(canvasRef) {
     stageLabel,
     helperLabel,
     modeLabel,
+    restartGame,
   }
 }

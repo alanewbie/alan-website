@@ -35,28 +35,28 @@
           <div>
             <h3 class="text-lg font-semibold mb-3">AI & Engineering</h3>
             <ul class="text-gray-400 space-y-2 text-sm">
-              <li>• Java, Python, JavaScript</li>
-              <li>• Retrieval-Augmented Generation (RAG)</li>
-              <li>• LLM Evaluation & Benchmarking</li>
-              <li>• LangChain / OpenAI API</li>
+              <li>o Java, Python, JavaScript</li>
+              <li>o Retrieval-Augmented Generation (RAG)</li>
+              <li>o LLM Evaluation & Benchmarking</li>
+              <li>o LangChain / OpenAI API</li>
             </ul>
           </div>
           <div>
             <h3 class="text-lg font-semibold mb-3">Cloud & Platforms</h3>
             <ul class="text-gray-400 space-y-2 text-sm">
-              <li>• Azure / AWS / GCP</li>
-              <li>• API & SDK Integration</li>
-              <li>• Enterprise SaaS Deployment</li>
-              <li>• Database & Backend Systems</li>
+              <li>o Azure / AWS / GCP</li>
+              <li>o API & SDK Integration</li>
+              <li>o Enterprise SaaS Deployment</li>
+              <li>o Database & Backend Systems</li>
             </ul>
           </div>
           <div>
             <h3 class="text-lg font-semibold mb-3">Business & Consulting</h3>
             <ul class="text-gray-400 space-y-2 text-sm">
-              <li>• Technical Presales & POC</li>
-              <li>• Enterprise Client Consulting</li>
-              <li>• Cross-functional Collaboration</li>
-              <li>• AI Adoption Strategy</li>
+              <li>o Technical Presales & POC</li>
+              <li>o Enterprise Client Consulting</li>
+              <li>o Cross-functional Collaboration</li>
+              <li>o AI Adoption Strategy</li>
             </ul>
           </div>
         </div>
@@ -177,7 +177,7 @@
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 const heroUrl = new URL('../assets/hero.png', import.meta.url).href
-const roles = ['Technical Presales', 'Software Developer', 'Business Development Specialist']
+const roles = ['Technical Presales', 'Software Developer', 'Business Development']
 
 // typing
 const typedText = ref('')

@@ -12,7 +12,7 @@ export const STAGES = [
   },
   {
     id: 'taiwan-born',
-    title: 'Born in Taiwan',
+    title: '1992 - Born in Taiwan',
     start: 1200,
     end: 1900,
     skyTop: '#99dcff',
@@ -23,9 +23,9 @@ export const STAGES = [
   },
   {
     id: 'indonesia',
-    title: 'Base in Indonesia',
-    start: 2500,
-    end: 3200,
+    title: '1993 - Base in Indonesia',
+    start: 2550,
+    end: 3950,
     skyTop: '#f5c989',
     skyBottom: '#ffe8bc',
     ground: '#4f8d4d',
@@ -34,9 +34,9 @@ export const STAGES = [
   },
   {
     id: 'taiwan-return',
-    title: 'Back to Taiwan',
-    start: 3800,
-    end: 4500,
+    title: '2010 - Back to Taiwan',
+    start: 4550,
+    end: 5950,
     skyTop: '#b8d8ff',
     skyBottom: '#f2f8ff',
     ground: '#6ca07d',
@@ -45,9 +45,9 @@ export const STAGES = [
   },
   {
     id: 'melbourne-master',
-    title: 'Move to Melbourne for Master',
-    start: 5100,
-    end: 5800,
+    title: '2024 - Move to Melbourne for Master',
+    start: 6550,
+    end: 7250,
     skyTop: '#8fc8ff',
     skyBottom: '#dbeeff',
     ground: '#6f9f7a',
@@ -82,6 +82,20 @@ export const PORTAL = {
 }
 
 export const AIRPORT_ZONE = 160
+export const HOSPITAL = {
+  x: STAGES[1].start + 140,
+  width: 170,
+  height: 130,
+  groundOffset: 8,
+}
+
+export const INDONESIA_TERRACES = {
+  x: STAGES[2].start + 270,
+  width: 280,
+  height: 160,
+  groundOffset: 80,
+  peakLift: 43,
+}
 
 export const PLATFORMS = [
   { x: 1320, y: 560, w: 180, h: 24 },
