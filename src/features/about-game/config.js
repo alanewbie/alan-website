@@ -36,7 +36,7 @@ export const STAGES = [
     id: 'taiwan-return',
     title: '2010 - Back to Taiwan',
     start: 4550,
-    end: 5950,
+    end: 6100,
     skyTop: '#b8d8ff',
     skyBottom: '#f2f8ff',
     ground: '#6ca07d',
@@ -47,7 +47,7 @@ export const STAGES = [
     id: 'melbourne-master',
     title: '2024 - Move to Melbourne for Master',
     start: 6550,
-    end: 7250,
+    end: 7500,
     skyTop: '#8fc8ff',
     skyBottom: '#dbeeff',
     ground: '#6f9f7a',
@@ -82,19 +82,20 @@ export const PORTAL = {
 }
 
 export const AIRPORT_ZONE = 160
+
 export const HOSPITAL = {
-  x: STAGES[1].start + 140,
-  width: 170,
-  height: 130,
+  x: STAGES[1].start,
+  width: 340,
+  height: 260,
   groundOffset: 8,
 }
 
 export const INDONESIA_TERRACES = {
-  x: STAGES[2].start + 270,
+  x: STAGES[2].start + 200,
   width: 280,
-  height: 160,
-  groundOffset: 80,
-  peakLift: 43,
+  height: 200,
+  groundOffset: 70,
+  peakLift: 50,
 }
 
 export const PLATFORMS = [

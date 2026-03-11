@@ -16,14 +16,27 @@ const companyImage = new Image()
 companyImage.src = new URL('../../assets/game/company.png', import.meta.url).href
 const monashImage = new Image()
 monashImage.src = new URL('../../assets/game/monash.png', import.meta.url).href
+
 const taiwanFlagImage = new Image()
 taiwanFlagImage.src = new URL('../../assets/game/Taiwan.png', import.meta.url).href
 const indonesiaFlagImage = new Image()
 indonesiaFlagImage.src = new URL('../../assets/game/Indonesia.png', import.meta.url).href
 const australiaFlagImage = new Image()
 australiaFlagImage.src = new URL('../../assets/game/Australia.png', import.meta.url).href
+
 let taiwanFlagFlippedImage = null
 let australiaFlagFlippedImage = null
+const FOCUS_STAGE_ID = null
+
+const ISO = {
+  xScale: 0.58,
+  yScale: 0.24,
+  depthX: 1.0,
+  depthY: 0.5,
+  originX: 140,
+  originYRatio: 0.8,
+  laneDepth: 165,
+}
 
 function createFlippedFlagImage(image) {
   if (!image.complete || image.naturalWidth === 0) return null
@@ -57,156 +70,191 @@ function getFlippedFlagImage(stageId) {
   return indonesiaFlagImage
 }
 
-function drawStars(ctx, stage, camera, groundY) {
+function projectPoint(worldX, worldZ, worldY, camera) {
+  const dx = worldX - camera.x
+  return {
+    x: ISO.originX + dx * ISO.xScale + worldZ * ISO.depthX,
+    y: camera.h * ISO.originYRatio - dx * ISO.yScale + worldZ * ISO.depthY - worldY,
+  }
+}
+
+function isStageVisible(stageId, mode) {
+  if (mode === 'intro') return stageId === 'space'
+  if (!FOCUS_STAGE_ID) return true
+  return stageId === FOCUS_STAGE_ID
+}
+
+function drawQuad(ctx, a, b, c, d, color, stroke = null) {
+  ctx.beginPath()
+  ctx.moveTo(a.x, a.y)
+  ctx.lineTo(b.x, b.y)
+  ctx.lineTo(c.x, c.y)
+  ctx.lineTo(d.x, d.y)
+  ctx.closePath()
+  ctx.fillStyle = color
+  ctx.fill()
+
+  if (stroke) {
+    ctx.strokeStyle = stroke
+    ctx.lineWidth = 1.2
+    ctx.stroke()
+  }
+}
+
+function drawStars(ctx, stage, camera) {
   if (stage.scenery !== 'stars') return
 
-  const baseX = stage.start - camera.x
   const width = stage.end - stage.start
-
   ctx.fillStyle = 'rgba(255,255,255,0.75)'
+
   for (let i = 0; i < 34; i += 1) {
-    const x = baseX + ((i * 97) % width)
-    const y = 40 + ((i * 61) % Math.max(120, groundY - 230))
+    const worldX = stage.start + ((i * 97) % width)
+    const pt = projectPoint(worldX, 20 + ((i * 29) % 120), 230 + ((i * 41) % 220), camera)
     ctx.beginPath()
-    ctx.arc(x, y, i % 3 === 0 ? 2.1 : 1.3, 0, Math.PI * 2)
+    ctx.arc(pt.x, pt.y, i % 3 === 0 ? 2.1 : 1.3, 0, Math.PI * 2)
     ctx.fill()
   }
 }
 
-function drawOceans(ctx, camera, world) {
-  const oceanTop = world.groundY + 34
+function drawStageSurfaces(ctx, camera, mode) {
+  const stages = STAGES.filter((stage) => isStageVisible(stage.id, mode))
+
+  for (const stage of stages) {
+    const a = projectPoint(stage.start, 0, 0, camera)
+    const b = projectPoint(stage.end, 0, 0, camera)
+    const c = projectPoint(stage.end, ISO.laneDepth, 0, camera)
+    const d = projectPoint(stage.start, ISO.laneDepth, 0, camera)
+
+    drawQuad(ctx, a, b, c, d, stage.ground, 'rgba(0,0,0,0.12)')
+
+    const frontDrop = 150
+    drawQuad(
+      ctx,
+      d,
+      c,
+      { x: c.x, y: c.y + frontDrop },
+      { x: d.x, y: d.y + frontDrop },
+      'rgba(0,0,0,0.18)',
+    )
+
+    drawStars(ctx, stage, camera)
+  }
+}
+
+function drawOceans(ctx, camera, mode) {
+  if (mode !== 'play') return
+  if (FOCUS_STAGE_ID) return
+  const oceanLevelY = 0
+  const oceanFrontDrop = 150
 
   for (let i = 1; i < STAGES.length - 1; i += 1) {
     const oceanStart = STAGES[i].end
     const oceanEnd = STAGES[i + 1].start
-    const x = oceanStart - camera.x
-    const w = oceanEnd - oceanStart
 
-    ctx.fillStyle = '#2f7ebc'
-    ctx.fillRect(x, oceanTop, w, camera.h - oceanTop)
+    const a = projectPoint(oceanStart, 0, oceanLevelY, camera)
+    const b = projectPoint(oceanEnd, 0, oceanLevelY, camera)
+    const c = projectPoint(oceanEnd, ISO.laneDepth, oceanLevelY, camera)
+    const d = projectPoint(oceanStart, ISO.laneDepth, oceanLevelY, camera)
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)'
-    ctx.lineWidth = 2
+    drawQuad(ctx, a, b, c, d, '#2f7ebc', 'rgba(255,255,255,0.2)')
+    const cb = { x: c.x, y: c.y + oceanFrontDrop }
+    const db = { x: d.x, y: d.y + oceanFrontDrop }
+    drawQuad(ctx, d, c, cb, db, 'rgba(17,74,119,0.78)', 'rgba(255,255,255,0.08)')
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.34)'
+    ctx.lineWidth = 1.4
     for (let row = 0; row < 3; row += 1) {
-      const y = oceanTop + 10 + row * 16
+      const z = 38 + row * 34
       ctx.beginPath()
       for (let k = 0; k <= 12; k += 1) {
-        const px = x + (k * w) / 12
-        const py = y + Math.sin((k + row) * 0.8) * 2
-        if (k === 0) ctx.moveTo(px, py)
-        else ctx.lineTo(px, py)
+        const x = oceanStart + ((oceanEnd - oceanStart) * k) / 12
+        const pt = projectPoint(x, z, oceanLevelY + Math.sin((k + row) * 0.7) * 1.4, camera)
+        if (k === 0) ctx.moveTo(pt.x, pt.y)
+        else ctx.lineTo(pt.x, pt.y)
       }
       ctx.stroke()
     }
-  }
-}
 
-function drawAirports(ctx, camera, world, currentStageIndex, mode) {
-  if (mode !== 'play') return
+    const fishCount = 4
+    for (let fish = 0; fish < fishCount; fish += 1) {
+      const t = (fish + 1) / (fishCount + 1)
+      const depth = (Math.sin((i + fish) * 1.7) + 1) * 0.5
+      const topX = d.x + (c.x - d.x) * t
+      const topY = d.y + (c.y - d.y) * t
+      const sideX = topX
+      const sideY = topY + 28 + depth * 62
+      const fishW = 16 + depth * 10
+      const fishH = 6 + depth * 4
 
-  const groundY = world.groundY
-  for (let i = 1; i < STAGES.length - 1; i += 1) {
-    const stage = STAGES[i]
-    const runwayX = stage.end - AIRPORT_ZONE
-    const sx = runwayX - camera.x
-    const imgW = AIRPORT_ZONE
-    const imgH = 150
-    const imgX = sx - 10
-    const imgY = groundY - imgH
+      ctx.fillStyle = 'rgba(167,227,255,0.72)'
+      ctx.beginPath()
+      ctx.ellipse(sideX, sideY, fishW * 0.5, fishH * 0.5, 0, 0, Math.PI * 2)
+      ctx.fill()
 
-    if (airportImage.complete && airportImage.naturalWidth > 0) {
-      ctx.drawImage(airportImage, imgX, imgY, imgW, imgH)
+      const tailDir = fish % 2 === 0 ? -1 : 1
+      ctx.beginPath()
+      ctx.moveTo(sideX + tailDir * (fishW * 0.5), sideY)
+      ctx.lineTo(sideX + tailDir * (fishW * 0.5 + 7), sideY - 4)
+      ctx.lineTo(sideX + tailDir * (fishW * 0.5 + 7), sideY + 4)
+      ctx.closePath()
+      ctx.fill()
     }
   }
 }
 
-function drawHospital(ctx, camera, world) {
-  const x = HOSPITAL.x - camera.x
-  const y = world.groundY - HOSPITAL.height + HOSPITAL.groundOffset
+function drawBillboard(ctx, image, camera, worldX, width, height, opts = {}) {
+  const worldZ = opts.worldZ ?? 108
+  const worldY = opts.worldY ?? 0
+  const yOffset = opts.yOffset ?? 0
 
-  if (hospitalImage.complete && hospitalImage.naturalWidth > 0) {
-    ctx.drawImage(hospitalImage, x, y, HOSPITAL.width, HOSPITAL.height)
+  const p = projectPoint(worldX, worldZ, worldY, camera)
+  const x = p.x - width / 2
+  const y = p.y - height + yOffset
+
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.drawImage(image, x, y, width, height)
   }
 }
 
-function drawIndonesiaTerraces(ctx, camera, world) {
-  const width = INDONESIA_TERRACES.width
-  const height = INDONESIA_TERRACES.height
-  const x = INDONESIA_TERRACES.x - camera.x
-  const y = world.groundY - height + INDONESIA_TERRACES.groundOffset
-
-  if (terracesImage.complete && terracesImage.naturalWidth > 0) {
-    ctx.drawImage(terracesImage, x, y, width, height)
+function drawLandmarks(ctx, camera, world) {
+  if (isStageVisible('taiwan-born', 'play')) {
+    drawBillboard(
+      ctx,
+      hospitalImage,
+      camera,
+      HOSPITAL.x + HOSPITAL.width / 2,
+      HOSPITAL.width,
+      HOSPITAL.height,
+      {
+        yOffset: 10,
+      },
+    )
   }
-}
 
-function drawIndonesiaSchool(ctx, camera, world) {
-  const indonesiaStage = STAGES.find((stage) => stage.id === 'indonesia')
-  if (!indonesiaStage) return
-
-  const width = 250
-  const height = 200
-  const x = indonesiaStage.start + 720 - camera.x
-  const y = world.groundY - 130
-
-  if (schoolImage.complete && schoolImage.naturalWidth > 0) {
-    ctx.drawImage(schoolImage, x, y, width, height)
+  const indonesia = STAGES.find((s) => s.id === 'indonesia')
+  if (indonesia && isStageVisible('indonesia', 'play')) {
+    drawBillboard(
+      ctx,
+      terracesImage,
+      camera,
+      INDONESIA_TERRACES.x + INDONESIA_TERRACES.width / 2,
+      INDONESIA_TERRACES.width,
+      INDONESIA_TERRACES.height,
+      { yOffset: INDONESIA_TERRACES.groundOffset },
+    )
+    drawBillboard(ctx, schoolImage, camera, indonesia.start + 700, 280, 200, { yOffset: -20 })
   }
-}
 
-function drawTaiwanNTU(ctx, camera, world) {
-  const taiwanStage = STAGES.find((stage) => stage.id === 'taiwan-return')
-  if (!taiwanStage) return
-
-  const width = 260
-  const height = 200
-  const x = taiwanStage.start + 150 - camera.x
-  const y = world.groundY - 170
-
-  if (ntuImage.complete && ntuImage.naturalWidth > 0) {
-    ctx.drawImage(ntuImage, x, y, width, height)
+  const taiwanReturn = STAGES.find((s) => s.id === 'taiwan-return')
+  if (taiwanReturn && isStageVisible('taiwan-return', 'play')) {
+    drawBillboard(ctx, ntuImage, camera, taiwanReturn.start + 230, 260, 180, { yOffset: 20 })
+    drawBillboard(ctx, militaryImage, camera, taiwanReturn.start + 640, 250, 200, { yOffset: 55 })
+    drawBillboard(ctx, companyImage, camera, taiwanReturn.start + 970, 280, 200, { yOffset: -5 })
   }
-}
 
-function drawTaiwanMilitary(ctx, camera, world) {
-  const taiwanStage = STAGES.find((stage) => stage.id === 'taiwan-return')
-  if (!taiwanStage) return
-
-  const width = 230
-  const height = 165
-  const x = taiwanStage.start + 520 - camera.x
-  const y = world.groundY - 133
-
-  if (militaryImage.complete && militaryImage.naturalWidth > 0) {
-    ctx.drawImage(militaryImage, x, y, width, height)
-  }
-}
-
-function drawTaiwanCompany(ctx, camera, world) {
-  const taiwanStage = STAGES.find((stage) => stage.id === 'taiwan-return')
-  if (!taiwanStage) return
-
-  const width = 300
-  const height = 180
-  const x = taiwanStage.start + 840 - camera.x
-  const y = world.groundY - 165
-
-  if (companyImage.complete && companyImage.naturalWidth > 0) {
-    ctx.drawImage(companyImage, x, y, width, height)
-  }
-}
-
-function drawAustraliaMonash(ctx, camera, world) {
-  const australiaStage = STAGES.find((stage) => stage.id === 'melbourne-master')
-  if (!australiaStage) return
-
-  const width = 340
-  const height = 210
-  const x = australiaStage.start + 150 - camera.x
-  const y = world.groundY - 160
-
-  if (monashImage.complete && monashImage.naturalWidth > 0) {
-    ctx.drawImage(monashImage, x, y, width, height)
+  const melbourne = STAGES.find((s) => s.id === 'melbourne-master')
+  if (melbourne && isStageVisible('melbourne-master', 'play')) {
+    drawBillboard(ctx, monashImage, camera, melbourne.start + 250, 330, 250, { yOffset: 55 })
   }
 }
 
@@ -238,7 +286,7 @@ function getFlagConfig(stageId) {
   }
 }
 
-function drawWavingFlag(ctx, poleX, poleBottomY, time, flagConfig) {
+function drawWavingFlag(ctx, camera, poleWorldX, poleWorldZ, time, flagConfig) {
   const poleHeight = 108
   const flagWidth = flagConfig.width
   const flagHeight = flagConfig.height
@@ -248,20 +296,18 @@ function drawWavingFlag(ctx, poleX, poleBottomY, time, flagConfig) {
   const srcWidth = flagImage?.naturalWidth ?? flagImage?.width ?? 0
   const srcHeight = flagImage?.naturalHeight ?? flagImage?.height ?? 0
   const isDrawable = srcWidth > 0 && srcHeight > 0
-  const poleTopY = poleBottomY - poleHeight
 
+  const base = projectPoint(poleWorldX, poleWorldZ, 0, camera)
+  const poleTop = { x: base.x, y: base.y - poleHeight }
   ctx.fillStyle = '#4c4c4c'
-  ctx.fillRect(poleX, poleTopY, 4, poleHeight)
-
-  const baseX = poleX
-  const baseY = poleTopY + 6
+  ctx.fillRect(poleTop.x, poleTop.y, 4, poleHeight)
 
   const strips = 18
   for (let i = 0; i < strips; i += 1) {
     const ratio = i / (strips - 1)
     const wave = Math.sin(ratio * 8 - time * 5.5) * (waveStrength - ratio * 2.1)
-    const x = baseX - ratio * flagWidth
-    const y = baseY + wave
+    const x = poleTop.x - ratio * flagWidth
+    const y = poleTop.y + 6 + wave
     const sliceW = flagWidth / strips
     const srcIndex = reverseSample ? strips - 1 - i : i
     const srcX = (srcWidth / strips) * srcIndex
@@ -274,85 +320,200 @@ function drawWavingFlag(ctx, poleX, poleBottomY, time, flagConfig) {
   }
 }
 
-function drawFlags(ctx, camera, world, time) {
-  const poleBottomY = world.groundY
+function drawFlags(ctx, camera, mode, time) {
+  if (mode !== 'play') return
+  const flagEdgeOffset = 12
+  const flagTopDepth = 8
+
   for (let i = 1; i < STAGES.length; i += 1) {
     const stage = STAGES[i]
-    const poleX = stage.start + 92 - camera.x
+    if (!isStageVisible(stage.id, mode)) continue
+    const poleWorldX = stage.start + flagEdgeOffset
     const flagConfig = getFlagConfig(stage.id)
-    drawWavingFlag(ctx, poleX, poleBottomY, time + i * 0.6, flagConfig)
+    drawWavingFlag(ctx, camera, poleWorldX, flagTopDepth, time + i * 0.6, flagConfig)
   }
 }
 
-function drawPortal(ctx, camera, portal) {
-  const px = portal.x - camera.x
-  const py = portal.y - camera.y
+function drawAirports(ctx, camera, mode) {
+  if (mode !== 'play') return
+  const airportScale = 2
+
+  for (let i = 1; i < STAGES.length - 1; i += 1) {
+    const stage = STAGES[i]
+    if (!isStageVisible(stage.id, mode)) continue
+    const worldX = stage.end - AIRPORT_ZONE
+    drawBillboard(
+      ctx,
+      airportImage,
+      camera,
+      worldX - 40,
+      AIRPORT_ZONE * airportScale,
+      125 * airportScale,
+      { yOffset: 10 },
+    )
+  }
+}
+
+function drawPortal(ctx, camera, portal, world) {
+  const lift = world.groundY - portal.y
+  const p = projectPoint(portal.x, 98, lift, camera)
 
   ctx.beginPath()
-  ctx.arc(px, py, PORTAL.radius + 26, 0, Math.PI * 2)
+  ctx.arc(p.x, p.y, PORTAL.radius + 26, 0, Math.PI * 2)
   ctx.fillStyle = 'rgba(255,255,255,0.1)'
   ctx.fill()
 
   ctx.beginPath()
-  ctx.arc(px, py, PORTAL.radius, 0, Math.PI * 2)
+  ctx.arc(p.x, p.y, PORTAL.radius, 0, Math.PI * 2)
   ctx.lineWidth = 5
   ctx.strokeStyle = 'rgba(255,255,255,0.95)'
   ctx.stroke()
 
   ctx.fillStyle = 'rgba(255,255,255,0.85)'
   ctx.font = '14px system-ui'
-  ctx.fillText('Move into the circle to be born', px + 64, py + 6)
+  ctx.fillText('Move into the circle to be born', p.x + 64, p.y + 6)
 }
 
-function drawCharacter(ctx, player, camera, sprite, label, characterKey) {
+function drawPortalHintArrow(ctx, camera, portal, world, time) {
+  const lift = world.groundY - portal.y
+  const p = projectPoint(portal.x, 98, lift, camera)
+  const bob = Math.sin(time * 4.2) * 6
+  const tipX = p.x
+  const tipY = p.y - PORTAL.radius - 14 + bob
+  const baseY = tipY - 18
+
+  ctx.fillStyle = '#ff2b2b'
+  ctx.beginPath()
+  ctx.moveTo(tipX, tipY)
+  ctx.lineTo(tipX - 12, baseY)
+  ctx.lineTo(tipX + 12, baseY)
+  ctx.closePath()
+  ctx.fill()
+}
+
+function drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel) {
+  if (travel?.active) return
+  if (currentStageIndex < 1 || currentStageIndex >= STAGES.length - 1) return
+  const stage = STAGES[currentStageIndex]
+  const airportWorldX = stage.end - AIRPORT_ZONE - 40
+  const airportBase = projectPoint(airportWorldX, 108, 0, camera)
+  const bob = Math.sin(time * 4.4) * 6
+  const tipX = airportBase.x
+  const tipY = airportBase.y - 276 + bob
+  const stemTopY = tipY - 22
+
+  ctx.strokeStyle = '#ff2b2b'
+  ctx.lineWidth = 5
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.moveTo(tipX, stemTopY)
+  ctx.lineTo(tipX, tipY - 2)
+  ctx.stroke()
+
+  ctx.fillStyle = '#ff2b2b'
+  ctx.beginPath()
+  ctx.moveTo(tipX, tipY)
+  ctx.lineTo(tipX - 13, tipY - 18)
+  ctx.lineTo(tipX + 13, tipY - 18)
+  ctx.closePath()
+  ctx.fill()
+}
+
+function drawCharacter(ctx, player, camera, sprite, label, characterKey, world) {
   const scale = characterKey === 'spirit' ? 1 : 1.35
   const drawW = player.w * scale
   const drawH = player.h * scale
-  const offsetX = (drawW - player.w) / 2
-  const offsetY = drawH - player.h
   const groundShift =
     characterKey === 'child' || characterKey === 'student' || characterKey === 'master' ? 10 : 0
 
-  const sx = player.x - camera.x
-  const sy = player.y - camera.y
+  const playerCenterX = player.x + player.w / 2
+  const playerLift = world.groundY - player.h - player.y
+  const base = projectPoint(playerCenterX, 110, playerLift, camera)
 
+  const shadow = projectPoint(playerCenterX, 120, 0, camera)
   ctx.fillStyle = 'rgba(0,0,0,0.2)'
   ctx.beginPath()
-  ctx.ellipse(sx + player.w / 2, sy + player.h + 8, 22, 7, 0, 0, Math.PI * 2)
+  ctx.ellipse(shadow.x, shadow.y + 4, 22, 7, 0, 0, Math.PI * 2)
   ctx.fill()
 
   if (sprite?.complete && sprite.naturalWidth > 0) {
-    ctx.drawImage(sprite, sx - offsetX, sy - offsetY + groundShift, drawW, drawH)
+    ctx.drawImage(sprite, base.x - drawW / 2, base.y - drawH + groundShift, drawW, drawH)
   } else {
     ctx.fillStyle = '#ffffff'
-    ctx.fillRect(sx, sy, player.w, player.h)
+    ctx.fillRect(base.x - player.w / 2, base.y - player.h, player.w, player.h)
   }
 
   if (label) {
-    ctx.fillStyle = 'rgba(255,255,255,0.92)'
-    ctx.font = '700 18px system-ui'
     ctx.fillStyle = '#0f0f0f'
-    ctx.fillText(label, sx + 2, sy - 24)
+    ctx.font = '700 18px system-ui'
+    ctx.fillText(label, base.x - 18, base.y - drawH - 10)
   }
 }
 
-function drawAirplane(ctx, travel, camera) {
-  if (!travel.active) return
+function drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, travel) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'indonesia') return
+
+  const playerCenterX = player.x + player.w / 2
+  const terraceStart = INDONESIA_TERRACES.x
+  const terraceEnd = INDONESIA_TERRACES.x + INDONESIA_TERRACES.width
+  const terraceCenter = (terraceStart + terraceEnd) / 2
+  const centerBandHalf = (terraceEnd - terraceStart) * 0.1
+  const fadeMargin = 130
+  const dx = Math.abs(playerCenterX - terraceCenter)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const playerLift = world.groundY - player.h - player.y
+  const anchor = projectPoint(playerCenterX, 110, playerLift, camera)
+  const cardW = 560
+  const cardH = 176
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 286
+
+  ctx.fillStyle = `rgba(255,255,255,${0.97 * alpha})`
+  ctx.strokeStyle = `rgba(22,26,36,${0.7 * alpha})`
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(x, y, cardW, cardH, 12)
+  ctx.fill()
+  ctx.stroke()
+
+  const imageBoxX = x + 18
+  const imageBoxY = y + 18
+  const imageBoxW = 132
+  const imageBoxH = 132
+
+  ctx.strokeStyle = `rgba(124,132,151,${0.92 * alpha})`
+  ctx.setLineDash([6, 4])
+  ctx.strokeRect(imageBoxX, imageBoxY, imageBoxW, imageBoxH)
+  ctx.setLineDash([])
+
+  ctx.fillStyle = `rgba(110,118,138,${0.9 * alpha})`
+  ctx.font = '600 14px system-ui'
+  ctx.fillText('Add photo here', imageBoxX + 21, imageBoxY + 72)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  ctx.font = '700 29px system-ui'
+  ctx.fillText('1993 - A New Home', x + 176, y + 66)
+  ctx.font = '600 23px system-ui'
+  ctx.fillText('Relocated to Indonesia with my family,', x + 176, y + 106)
+  ctx.fillText('where I spent my growing-up years.', x + 176, y + 138)
 }
 
 export function renderScene(ctx, state) {
-  const {
-    camera,
-    world,
-    mode,
-    portal,
-    player,
-    currentStageIndex,
-    sprites,
-    characterKey,
-    travel,
-    time,
-  } = state
+  const { camera, world, mode, portal, player, currentStageIndex, sprites, characterKey, time, travel } =
+    state
   const stageIndex = Math.max(currentStageIndex, 0)
   const stage = STAGES[stageIndex]
 
@@ -362,34 +523,22 @@ export function renderScene(ctx, state) {
   ctx.fillStyle = gradient
   ctx.fillRect(0, 0, camera.w, camera.h)
 
-  const visibleBlocks = mode === 'intro' ? [STAGES[0]] : STAGES
-  for (const block of visibleBlocks) {
-    const x = block.start - camera.x
-    const w = block.end - block.start
-    ctx.fillStyle = block.ground
-    ctx.fillRect(x, world.groundY, w, camera.h - world.groundY)
-    drawStars(ctx, block, camera, world.groundY)
-  }
+  drawStageSurfaces(ctx, camera, mode)
+  drawOceans(ctx, camera, mode)
 
   if (mode === 'intro') {
-    drawPortal(ctx, camera, portal)
+    drawPortal(ctx, camera, portal, world)
+    drawPortalHintArrow(ctx, camera, portal, world, time)
   } else {
-    drawOceans(ctx, camera, world)
-    drawHospital(ctx, camera, world)
-    drawFlags(ctx, camera, world, time)
-    drawTaiwanNTU(ctx, camera, world)
-    drawTaiwanMilitary(ctx, camera, world)
-    drawTaiwanCompany(ctx, camera, world)
-    drawAustraliaMonash(ctx, camera, world)
-    drawIndonesiaTerraces(ctx, camera, world)
-    drawIndonesiaSchool(ctx, camera, world)
+    drawAirports(ctx, camera, mode)
+    drawLandmarks(ctx, camera, world)
+    drawFlags(ctx, camera, mode, time)
+    drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel)
   }
 
   const label = characterKey === 'traveler' ? '' : 'Alan'
-
-  drawAirports(ctx, camera, world, currentStageIndex, mode)
-  drawAirplane(ctx, travel, camera)
-  drawCharacter(ctx, player, camera, sprites[characterKey], label, characterKey)
+  drawCharacter(ctx, player, camera, sprites[characterKey], label, characterKey, world)
+  drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, travel)
 
   const isSpaceStage = stage.id === 'space'
   ctx.fillStyle = isSpaceStage ? 'rgba(255,255,255,0.95)' : '#0f0f0f'

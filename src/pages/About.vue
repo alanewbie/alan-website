@@ -12,7 +12,6 @@
 
     <div class="pointer-events-none absolute left-4 bottom-4 text-white/80 text-sm space-y-1">
       <p>Use ↑ ↓ ← → to control</p>
-      <p>Press Space to jump</p>
     </div>
   </section>
 </template>

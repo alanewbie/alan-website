@@ -41,7 +41,7 @@ function getTerraceLiftAtX(playerCenterX, currentStageIndex) {
 
 export function useAboutGame(canvasRef) {
   const stageLabel = ref('Spirit Space')
-  const helperLabel = ref('Move with Arrow keys / WASD. Jump: Space.')
+  const helperLabel = ref('Use ↑↓←→ to control')
   const modeLabel = ref('Intro')
 
   const state = {
@@ -99,7 +99,6 @@ export function useAboutGame(canvasRef) {
   }
 
   const keys = new Set()
-  let jumpHeld = false
 
   function updateCharacter() {
     if (state.mode === 'intro') {
@@ -136,7 +135,7 @@ export function useAboutGame(canvasRef) {
     modeLabel.value = state.mode === 'intro' ? 'Intro' : 'Play'
 
     if (state.mode === 'intro') {
-      helperLabel.value = 'Fly into the circle and be born.'
+      helperLabel.value = 'Use ↑↓←→ to control'
       return
     }
 
@@ -173,6 +172,21 @@ export function useAboutGame(canvasRef) {
     state.world.groundY = state.world.height - WORLD.groundPadding
     state.portal.x = STAGES[0].end
     state.portal.y = state.world.groundY - 200
+  }
+
+  function startIntroMode() {
+    state.mode = 'intro'
+    state.currentStageIndex = 0
+    state.birthDropActive = false
+    state.travel.active = false
+    state.travel.timer = 0
+    state.player.x = 120
+    state.player.y = state.world.groundY - state.player.h - 220
+    state.player.vx = 0
+    state.player.vy = 0
+    state.player.onGround = false
+    updateCharacter()
+    syncHud()
   }
 
   function startPlayMode() {
@@ -301,18 +315,11 @@ export function useAboutGame(canvasRef) {
 
     const left = keys.has('ArrowLeft') || keys.has('a') || keys.has('A')
     const right = keys.has('ArrowRight') || keys.has('d') || keys.has('D')
-    const jumpKey = keys.has(' ') || keys.has('ArrowUp') || keys.has('w') || keys.has('W')
+    const forwardSpeedMultiplier = 2
 
     if (left && !right) state.player.vx = -PLAYER.speed
-    else if (right && !left) state.player.vx = PLAYER.speed
+    else if (right && !left) state.player.vx = PLAYER.speed * forwardSpeedMultiplier
     else state.player.vx *= state.player.onGround ? PHYSICS.frictionGround : PHYSICS.frictionAir
-
-    if (jumpKey && !jumpHeld && state.player.onGround) {
-      state.player.vy = -PLAYER.jumpVelocity
-      state.player.onGround = false
-      jumpHeld = true
-    }
-    if (jumpKey) jumpHeld = true
 
     state.player.vy += PHYSICS.gravity * dt
     state.player.vy = Math.min(state.player.vy, PHYSICS.maxFall)
@@ -348,7 +355,7 @@ export function useAboutGame(canvasRef) {
       state.player.onGround = false
     }
 
-    const inAirportZone = state.player.x >= stage.end - AIRPORT_ZONE - 20
+    const inAirportZone = state.player.x >= stage.end - AIRPORT_ZONE - 40
     if (
       inAirportZone &&
       state.currentStageIndex < STAGES.length - 1 &&
@@ -399,57 +406,37 @@ export function useAboutGame(canvasRef) {
   }
 
   function onKeyDown(e) {
-    const block = [
-      'ArrowUp',
-      'ArrowDown',
-      'ArrowLeft',
-      'ArrowRight',
-      ' ',
-      'w',
-      'a',
-      's',
-      'd',
-      'W',
-      'A',
-      'S',
-      'D',
-    ]
+    const block = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ']
     if (block.includes(e.key)) e.preventDefault()
     keys.add(e.key)
+    const isJumpKey = e.code === 'Space' || e.key === 'ArrowUp'
+
+    if (
+      isJumpKey &&
+      state.mode === 'play' &&
+      !state.travel.active &&
+      !state.birthDropActive &&
+      state.player.onGround
+    ) {
+      state.player.vy = -PLAYER.jumpVelocity
+      state.player.onGround = false
+    }
   }
 
   function onKeyUp(e) {
     keys.delete(e.key)
-
-    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-      jumpHeld = false
-    }
   }
 
   function restartGame() {
     keys.clear()
-    jumpHeld = false
-
-    state.mode = 'intro'
-    state.currentStageIndex = 0
-    state.lockedMinX = STAGES[1].start
-    state.characterKey = 'spirit'
     state.hintText = ''
     state.hintTimer = 0
-    state.birthDropActive = false
-    state.birthDropX = 0
 
     state.travel.active = false
     state.travel.timer = 0
 
-    state.player.vx = 0
-    state.player.vy = 0
-    state.player.onGround = false
-    state.player.x = state.camera.w / 2 - state.player.w / 2
-    state.player.y = state.camera.h / 2 - state.player.h / 2
-
     resizeCanvas()
-    syncHud()
+    startIntroMode()
   }
 
   onMounted(() => {
@@ -464,10 +451,7 @@ export function useAboutGame(canvasRef) {
     window.addEventListener('resize', resizeCanvas)
 
     resizeCanvas()
-    syncHud()
-
-    state.player.x = state.camera.w / 2 - state.player.w / 2
-    state.player.y = state.camera.h / 2 - state.player.h / 2
+    startIntroMode()
 
     state.lastTime = performance.now()
     state.rafId = requestAnimationFrame(loop)
