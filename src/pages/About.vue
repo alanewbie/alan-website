@@ -10,8 +10,8 @@
       Restart
     </button>
 
-    <div class="pointer-events-none absolute left-4 bottom-4 text-white/80 text-sm space-y-1">
-      <p>Use ↑ ↓ ← → to control</p>
+    <div class="pointer-events-none absolute right-6 bottom-5 text-white text-2xl font-extrabold">
+      <p>Use ↑↓←→ to control</p>
     </div>
   </section>
 </template>

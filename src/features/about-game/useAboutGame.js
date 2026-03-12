@@ -39,6 +39,53 @@ function getTerraceLiftAtX(playerCenterX, currentStageIndex) {
   return INDONESIA_TERRACES.peakLift * clamp(slope, 0, 1)
 }
 
+function getStoryFocusZone(state) {
+  if (state.mode !== 'play' || state.travel.active || state.birthDropActive) return null
+  const stage = STAGES[state.currentStageIndex]
+  if (!stage) return null
+
+  const playerCenterX = state.player.x + state.player.w / 2
+
+  if (stage.id === 'taiwan-born') {
+    const center = HOSPITAL.x + HOSPITAL.width / 2
+    const centerBandHalf = HOSPITAL.width * 0.1
+    if (Math.abs(playerCenterX - center) <= centerBandHalf) return 'hospital'
+    return null
+  }
+
+  if (stage.id === 'indonesia') {
+    const terraceCenter = INDONESIA_TERRACES.x + INDONESIA_TERRACES.width / 2
+    const terraceBandHalf = INDONESIA_TERRACES.width * 0.1
+    if (Math.abs(playerCenterX - terraceCenter) <= terraceBandHalf) return 'terrace'
+
+    const schoolCenter = stage.start + 700
+    const schoolBandHalf = 280 * 0.1
+    if (Math.abs(playerCenterX - schoolCenter) <= schoolBandHalf) return 'school'
+  }
+
+  if (stage.id === 'taiwan-return') {
+    const ntuCenter = stage.start + 330
+    const ntuBandHalf = 260 * 0.1
+    if (Math.abs(playerCenterX - ntuCenter) <= ntuBandHalf) return 'ntu'
+
+    const militaryCenter = stage.start + 740
+    const militaryBandHalf = 250 * 0.1
+    if (Math.abs(playerCenterX - militaryCenter) <= militaryBandHalf) return 'military'
+
+    const companyCenter = stage.start + 1120
+    const companyBandHalf = 280 * 0.1
+    if (Math.abs(playerCenterX - companyCenter) <= companyBandHalf) return 'company'
+  }
+
+  if (stage.id === 'melbourne-master') {
+    const monashStudyCenter = stage.start + 570
+    const monashStudyBandHalf = 260 * 0.1
+    if (Math.abs(playerCenterX - monashStudyCenter) <= monashStudyBandHalf) return 'monashStudy'
+  }
+
+  return null
+}
+
 export function useAboutGame(canvasRef) {
   const stageLabel = ref('Spirit Space')
   const helperLabel = ref('Use ↑↓←→ to control')
@@ -94,6 +141,20 @@ export function useAboutGame(canvasRef) {
       endY: 0,
       planeX: 0,
       planeY: 0,
+    },
+    storyFocusKey: '',
+    autoJumpQueue: 0,
+    autoJumpTimer: 0,
+    autoJumpLockTimer: 0,
+    autoJumpLockX: 0,
+    seenAutoJumpZones: {
+      hospital: false,
+      terrace: false,
+      school: false,
+      ntu: false,
+      military: false,
+      company: false,
+      monashStudy: false,
     },
     sprites: loadCharacterSprites(),
   }
@@ -185,6 +246,18 @@ export function useAboutGame(canvasRef) {
     state.player.vx = 0
     state.player.vy = 0
     state.player.onGround = false
+    state.storyFocusKey = ''
+    state.autoJumpQueue = 0
+    state.autoJumpTimer = 0
+    state.autoJumpLockTimer = 0
+    state.autoJumpLockX = 0
+    state.seenAutoJumpZones.hospital = false
+    state.seenAutoJumpZones.terrace = false
+    state.seenAutoJumpZones.school = false
+    state.seenAutoJumpZones.ntu = false
+    state.seenAutoJumpZones.military = false
+    state.seenAutoJumpZones.company = false
+    state.seenAutoJumpZones.monashStudy = false
     updateCharacter()
     syncHud()
   }
@@ -200,6 +273,18 @@ export function useAboutGame(canvasRef) {
     state.player.vx = 0
     state.player.vy = 0
     state.player.onGround = false
+    state.storyFocusKey = ''
+    state.autoJumpQueue = 0
+    state.autoJumpTimer = 0
+    state.autoJumpLockTimer = 0
+    state.autoJumpLockX = 0
+    state.seenAutoJumpZones.hospital = false
+    state.seenAutoJumpZones.terrace = false
+    state.seenAutoJumpZones.school = false
+    state.seenAutoJumpZones.ntu = false
+    state.seenAutoJumpZones.military = false
+    state.seenAutoJumpZones.company = false
+    state.seenAutoJumpZones.monashStudy = false
     updateCharacter()
     syncHud()
   }
@@ -222,6 +307,11 @@ export function useAboutGame(canvasRef) {
     state.player.vx = 0
     state.player.vy = 0
     state.player.onGround = false
+    state.storyFocusKey = ''
+    state.autoJumpQueue = 0
+    state.autoJumpTimer = 0
+    state.autoJumpLockTimer = 0
+    state.autoJumpLockX = 0
     updateCharacter()
     syncHud()
   }
@@ -235,6 +325,11 @@ export function useAboutGame(canvasRef) {
     state.player.vx = 0
     state.player.vy = 0
     state.player.onGround = true
+    state.storyFocusKey = ''
+    state.autoJumpQueue = 0
+    state.autoJumpTimer = 0
+    state.autoJumpLockTimer = 0
+    state.autoJumpLockX = 0
     updateCharacter()
     syncHud()
   }
@@ -246,11 +341,12 @@ export function useAboutGame(canvasRef) {
     const down = keys.has('ArrowDown') || keys.has('s') || keys.has('S')
 
     const flySpeed = 280
+    const introForwardSpeedMultiplier = 2
     let vx = 0
     let vy = 0
 
     if (left) vx -= flySpeed
-    if (right) vx += flySpeed
+    if (right) vx += flySpeed * introForwardSpeedMultiplier
     if (up) vy -= flySpeed
     if (down) vy += flySpeed
 
@@ -315,16 +411,23 @@ export function useAboutGame(canvasRef) {
 
     const left = keys.has('ArrowLeft') || keys.has('a') || keys.has('A')
     const right = keys.has('ArrowRight') || keys.has('d') || keys.has('D')
+    const controlsLocked = state.autoJumpLockTimer > 0
     const forwardSpeedMultiplier = 2
 
-    if (left && !right) state.player.vx = -PLAYER.speed
+    if (controlsLocked) {
+      state.autoJumpLockTimer = Math.max(0, state.autoJumpLockTimer - dt)
+      state.player.vx = 0
+      state.player.x = state.autoJumpLockX
+    } else if (left && !right) state.player.vx = -PLAYER.speed
     else if (right && !left) state.player.vx = PLAYER.speed * forwardSpeedMultiplier
     else state.player.vx *= state.player.onGround ? PHYSICS.frictionGround : PHYSICS.frictionAir
 
     state.player.vy += PHYSICS.gravity * dt
     state.player.vy = Math.min(state.player.vy, PHYSICS.maxFall)
 
-    state.player.x += state.player.vx * dt
+    if (!controlsLocked) {
+      state.player.x += state.player.vx * dt
+    }
 
     const playerCenter = state.player.x + state.player.w / 2
     const detectedStageIndex = findStageIndexByX(playerCenter)
@@ -364,6 +467,32 @@ export function useAboutGame(canvasRef) {
     ) {
       const nextStageIndex = findNextPlayableStage(state.currentStageIndex)
       startTravel(nextStageIndex)
+    }
+
+    const focusZone = getStoryFocusZone(state)
+    if (
+      focusZone &&
+      focusZone !== state.storyFocusKey &&
+      state.seenAutoJumpZones[focusZone] === false
+    ) {
+      state.storyFocusKey = focusZone
+      state.seenAutoJumpZones[focusZone] = true
+      state.autoJumpQueue = 2
+      state.autoJumpTimer = 0
+      state.autoJumpLockTimer = 0.5
+      state.autoJumpLockX = state.player.x
+    } else if (!focusZone) {
+      state.storyFocusKey = ''
+    }
+
+    if (state.autoJumpQueue > 0) {
+      state.autoJumpTimer = Math.max(0, state.autoJumpTimer - dt)
+      if (state.autoJumpTimer === 0 && state.player.onGround) {
+        state.player.vy = -Math.round(PLAYER.jumpVelocity * 0.58)
+        state.player.onGround = false
+        state.autoJumpQueue -= 1
+        state.autoJumpTimer = 0.08
+      }
     }
 
     updateCharacter()
@@ -416,6 +545,7 @@ export function useAboutGame(canvasRef) {
       state.mode === 'play' &&
       !state.travel.active &&
       !state.birthDropActive &&
+      state.autoJumpLockTimer <= 0 &&
       state.player.onGround
     ) {
       state.player.vy = -PLAYER.jumpVelocity

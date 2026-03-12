@@ -6,16 +6,30 @@ const hospitalImage = new Image()
 hospitalImage.src = new URL('../../assets/game/Hospital.png', import.meta.url).href
 const terracesImage = new Image()
 terracesImage.src = new URL('../../assets/game/terraces.png', import.meta.url).href
+const terracesStoryImage = new Image()
+terracesStoryImage.src = new URL('../../assets/game/terracespic.png', import.meta.url).href
 const schoolImage = new Image()
 schoolImage.src = new URL('../../assets/game/school.png', import.meta.url).href
+const schoolStoryImage = new Image()
+schoolStoryImage.src = new URL('../../assets/game/schoolpic.png', import.meta.url).href
 const ntuImage = new Image()
 ntuImage.src = new URL('../../assets/game/ntu.png', import.meta.url).href
+const ntuStoryImage = new Image()
+ntuStoryImage.src = new URL('../../assets/game/ntupic.png', import.meta.url).href
 const militaryImage = new Image()
 militaryImage.src = new URL('../../assets/game/military.png', import.meta.url).href
+const militaryStoryImage = new Image()
+militaryStoryImage.src = new URL('../../assets/game/militarypic.png', import.meta.url).href
 const companyImage = new Image()
 companyImage.src = new URL('../../assets/game/company.png', import.meta.url).href
+const companyStoryImage = new Image()
+companyStoryImage.src = new URL('../../assets/game/companypic.png', import.meta.url).href
 const monashImage = new Image()
 monashImage.src = new URL('../../assets/game/monash.png', import.meta.url).href
+const monash2Image = new Image()
+monash2Image.src = new URL('../../assets/game/monash2.png', import.meta.url).href
+const monashStoryImage = new Image()
+monashStoryImage.src = new URL('../../assets/game/monashpic.png', import.meta.url).href
 
 const taiwanFlagImage = new Image()
 taiwanFlagImage.src = new URL('../../assets/game/Taiwan.png', import.meta.url).href
@@ -27,6 +41,34 @@ australiaFlagImage.src = new URL('../../assets/game/Australia.png', import.meta.
 let taiwanFlagFlippedImage = null
 let australiaFlagFlippedImage = null
 const FOCUS_STAGE_ID = null
+const INDONESIA_SCHOOL = {
+  xOffset: 700,
+  width: 280,
+  height: 200,
+  yOffset: -20,
+}
+const TAIWAN_NTU = {
+  xOffset: 330,
+  width: 260,
+  height: 180,
+  yOffset: 20,
+}
+const TAIWAN_MILITARY = {
+  xOffset: 740,
+  width: 250,
+  height: 200,
+  yOffset: 55,
+}
+const TAIWAN_COMPANY = {
+  xOffset: 1120,
+  width: 280,
+  height: 200,
+  yOffset: -5,
+}
+const MELBOURNE_STUDY = {
+  xOffset: 570,
+  width: 260,
+}
 
 const ISO = {
   xScale: 0.58,
@@ -99,6 +141,73 @@ function drawQuad(ctx, a, b, c, d, color, stroke = null) {
     ctx.lineWidth = 1.2
     ctx.stroke()
   }
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(/\s+/).filter(Boolean)
+  if (!words.length) return 0
+
+  let line = words[0]
+  let lineCount = 0
+
+  for (let i = 1; i < words.length; i += 1) {
+    const testLine = `${line} ${words[i]}`
+    if (ctx.measureText(testLine).width <= maxWidth) {
+      line = testLine
+    } else {
+      ctx.fillText(line, x, y + lineCount * lineHeight)
+      line = words[i]
+      lineCount += 1
+    }
+  }
+
+  ctx.fillText(line, x, y + lineCount * lineHeight)
+  return lineCount + 1
+}
+
+function drawStoryCardChrome(ctx, x, y, w, h, alpha, time, phase = 0) {
+  const liftIn = (1 - alpha) * 14
+  const bob = Math.sin(time * 3.4 + phase) * 1.4 * alpha
+  const cardY = y - liftIn - bob
+
+  ctx.fillStyle = `rgba(255,255,255,${0.97 * alpha})`
+  ctx.strokeStyle = `rgba(22,26,36,${0.7 * alpha})`
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.roundRect(x, cardY, w, h, 12)
+  ctx.fill()
+  ctx.stroke()
+
+  // Subtle top accent + moving sparkle for a fancier appearance.
+  ctx.fillStyle = `rgba(255,255,255,${0.2 * alpha})`
+  ctx.fillRect(x + 18, cardY + 10, w - 36, 3)
+  const sparkleX = x + 22 + ((time * 130 + phase * 57) % Math.max(1, w - 44))
+  ctx.beginPath()
+  ctx.arc(sparkleX, cardY + 11.5, 1.7, 0, Math.PI * 2)
+  ctx.fillStyle = `rgba(255,255,255,${0.4 * alpha})`
+  ctx.fill()
+
+  return cardY
+}
+
+function drawStoryImageWithOutline(ctx, image, x, y, w, h, alpha) {
+  ctx.save()
+  ctx.globalAlpha = alpha
+
+  if (image?.complete && image.naturalWidth > 0) {
+    ctx.drawImage(image, x, y, w, h)
+  } else {
+    ctx.strokeStyle = 'rgba(124,132,151,0.92)'
+    ctx.setLineDash([6, 4])
+    ctx.strokeRect(x, y, w, h)
+    ctx.setLineDash([])
+  }
+
+  ctx.setLineDash([])
+  ctx.lineWidth = 1
+  ctx.strokeStyle = 'rgba(0,0,0,0.9)'
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1)
+  ctx.restore()
 }
 
 function drawStars(ctx, stage, camera) {
@@ -242,18 +351,51 @@ function drawLandmarks(ctx, camera, world) {
       INDONESIA_TERRACES.height,
       { yOffset: INDONESIA_TERRACES.groundOffset },
     )
-    drawBillboard(ctx, schoolImage, camera, indonesia.start + 700, 280, 200, { yOffset: -20 })
+    drawBillboard(
+      ctx,
+      schoolImage,
+      camera,
+      indonesia.start + INDONESIA_SCHOOL.xOffset,
+      INDONESIA_SCHOOL.width,
+      INDONESIA_SCHOOL.height,
+      { yOffset: INDONESIA_SCHOOL.yOffset },
+    )
   }
 
   const taiwanReturn = STAGES.find((s) => s.id === 'taiwan-return')
   if (taiwanReturn && isStageVisible('taiwan-return', 'play')) {
-    drawBillboard(ctx, ntuImage, camera, taiwanReturn.start + 230, 260, 180, { yOffset: 20 })
-    drawBillboard(ctx, militaryImage, camera, taiwanReturn.start + 640, 250, 200, { yOffset: 55 })
-    drawBillboard(ctx, companyImage, camera, taiwanReturn.start + 970, 280, 200, { yOffset: -5 })
+    drawBillboard(
+      ctx,
+      ntuImage,
+      camera,
+      taiwanReturn.start + TAIWAN_NTU.xOffset,
+      TAIWAN_NTU.width,
+      TAIWAN_NTU.height,
+      { yOffset: TAIWAN_NTU.yOffset },
+    )
+    drawBillboard(
+      ctx,
+      militaryImage,
+      camera,
+      taiwanReturn.start + TAIWAN_MILITARY.xOffset,
+      TAIWAN_MILITARY.width,
+      TAIWAN_MILITARY.height,
+      { yOffset: TAIWAN_MILITARY.yOffset },
+    )
+    drawBillboard(
+      ctx,
+      companyImage,
+      camera,
+      taiwanReturn.start + TAIWAN_COMPANY.xOffset,
+      TAIWAN_COMPANY.width,
+      TAIWAN_COMPANY.height,
+      { yOffset: TAIWAN_COMPANY.yOffset },
+    )
   }
 
   const melbourne = STAGES.find((s) => s.id === 'melbourne-master')
   if (melbourne && isStageVisible('melbourne-master', 'play')) {
+    drawBillboard(ctx, monash2Image, camera, melbourne.start + 620, 320, 235, { yOffset: 52 })
     drawBillboard(ctx, monashImage, camera, melbourne.start + 250, 330, 250, { yOffset: 55 })
   }
 }
@@ -450,7 +592,7 @@ function drawCharacter(ctx, player, camera, sprite, label, characterKey, world) 
   }
 }
 
-function drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, travel) {
+function drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, travel, time) {
   if (travel?.active) return
   const stage = STAGES[currentStageIndex]
   if (!stage || stage.id !== 'indonesia') return
@@ -474,46 +616,338 @@ function drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, tra
   }
   if (alpha <= 0.01) return
 
-  const playerLift = world.groundY - player.h - player.y
-  const anchor = projectPoint(playerCenterX, 110, playerLift, camera)
-  const cardW = 560
-  const cardH = 176
+  const anchor = projectPoint(playerCenterX - 20, 110, 0, camera)
+  const cardW = 480
+  const cardH = 370
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 286
+  const y = anchor.y - 500
 
-  ctx.fillStyle = `rgba(255,255,255,${0.97 * alpha})`
-  ctx.strokeStyle = `rgba(22,26,36,${0.7 * alpha})`
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.roundRect(x, y, cardW, cardH, 12)
-  ctx.fill()
-  ctx.stroke()
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.15)
 
-  const imageBoxX = x + 18
-  const imageBoxY = y + 18
-  const imageBoxW = 132
-  const imageBoxH = 132
-
-  ctx.strokeStyle = `rgba(124,132,151,${0.92 * alpha})`
-  ctx.setLineDash([6, 4])
-  ctx.strokeRect(imageBoxX, imageBoxY, imageBoxW, imageBoxH)
-  ctx.setLineDash([])
-
-  ctx.fillStyle = `rgba(110,118,138,${0.9 * alpha})`
-  ctx.font = '600 14px system-ui'
-  ctx.fillText('Add photo here', imageBoxX + 21, imageBoxY + 72)
+  const imageW = 350
+  const imageH = 240
+  const contentTop = cardY + 16
+  const titleY = contentTop + 24
+  const bodyLine1Y = contentTop + 58
+  const bodyLine2Y = contentTop + 86
+  const imageX = x + (cardW - imageW) / 2
+  const imageY = contentTop + 98
+  drawStoryImageWithOutline(ctx, terracesStoryImage, imageX, imageY, imageW, imageH, alpha)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  ctx.font = '700 29px system-ui'
-  ctx.fillText('1993 - A New Home', x + 176, y + 66)
-  ctx.font = '600 23px system-ui'
-  ctx.fillText('Relocated to Indonesia with my family,', x + 176, y + 106)
-  ctx.fillText('where I spent my growing-up years.', x + 176, y + 138)
+  ctx.font = '700 26px system-ui'
+  ctx.textAlign = 'center'
+  ctx.fillText('A New Home', x + cardW / 2, titleY)
+  ctx.font = '600 19px system-ui'
+  ctx.fillText('Relocated to Indonesia with my family,', x + cardW / 2, bodyLine1Y)
+  ctx.fillText('where I spent my growing-up years.', x + cardW / 2, bodyLine2Y)
+  ctx.textAlign = 'left'
+}
+
+function drawSchoolStoryCard(ctx, camera, player, world, currentStageIndex, travel, time) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'indonesia') return
+
+  const playerCenterX = player.x + player.w / 2
+  const schoolCenter = stage.start + INDONESIA_SCHOOL.xOffset
+  const centerBandHalf = INDONESIA_SCHOOL.width * 0.1
+  const fadeMargin = 170
+  const dx = Math.abs(playerCenterX - schoolCenter)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 530
+  const cardH = 390
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 470
+
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.35)
+
+  const imageW = 380
+  const imageH = 250
+  const imageX = x + (cardW - imageW) / 2
+  const imageY = cardY + 120
+  drawStoryImageWithOutline(ctx, schoolStoryImage, imageX, imageY, imageW, imageH, alpha)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  ctx.font = '700 26px system-ui'
+  ctx.textAlign = 'center'
+  ctx.fillText('School Years in Indonesia', x + cardW / 2, cardY + 50)
+  ctx.font = '600 19px system-ui'
+  ctx.fillText('Studied from kindergarten to Grade 12,', x + cardW / 2, cardY + 84)
+  ctx.fillText('Guess which one is me!', x + cardW / 2, cardY + 112)
+  ctx.textAlign = 'left'
+}
+
+function drawNtuStoryCard(ctx, camera, player, world, currentStageIndex, travel, time) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'taiwan-return') return
+
+  const playerCenterX = player.x + player.w / 2
+  const ntuCenter = stage.start + TAIWAN_NTU.xOffset
+  const centerBandHalf = TAIWAN_NTU.width * 0.1
+  const fadeMargin = 170
+  const dx = Math.abs(playerCenterX - ntuCenter)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 530
+  const cardH = 390
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 470
+
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.55)
+
+  const imageW = 380
+  const imageH = 250
+  const imageX = x + (cardW - imageW) / 2
+  const imageY = cardY + 120
+  drawStoryImageWithOutline(ctx, ntuStoryImage, imageX, imageY, imageW, imageH, alpha)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  ctx.font = '700 24px system-ui'
+  ctx.textAlign = 'center'
+  ctx.fillText('Back in Taiwan for University', x + cardW / 2, cardY + 50)
+  ctx.font = '600 19px system-ui'
+  ctx.fillText("Pursued a Bachelor's in Landscape Architecture", x + cardW / 2, cardY + 84)
+  ctx.fillText('at National Taiwan University.', x + cardW / 2, cardY + 112)
+  ctx.textAlign = 'left'
+}
+
+function drawMilitaryStoryCard(ctx, camera, player, world, currentStageIndex, travel, time) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'taiwan-return') return
+
+  const playerCenterX = player.x + player.w / 2
+  const militaryCenter = stage.start + TAIWAN_MILITARY.xOffset
+  const centerBandHalf = TAIWAN_MILITARY.width * 0.1
+  const fadeMargin = 170
+  const dx = Math.abs(playerCenterX - militaryCenter)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 520
+  const cardH = 360
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 440
+
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.75)
+
+  const imageW = 230
+  const imageH = 300
+  const imageX = x + 24
+  const imageY = cardY + 30
+  drawStoryImageWithOutline(ctx, militaryStoryImage, imageX, imageY, imageW, imageH, alpha)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  const textX = imageX + imageW + 30
+  const textMaxW = cardW - (textX - x) - 26
+  ctx.font = '700 24px system-ui'
+  ctx.fillText('Military Service Year', textX, cardY + 70, textMaxW)
+  ctx.font = '600 19px system-ui'
+  drawWrappedText(
+    ctx,
+    "Completed one year of mandatory military service, and was selected for the honor guard at Taiwan's garrison points.",
+    textX,
+    cardY + 112,
+    textMaxW,
+    30,
+  )
+}
+
+function drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, travel, time) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'taiwan-return') return
+
+  const playerCenterX = player.x + player.w / 2
+  const companyCenter = stage.start + TAIWAN_COMPANY.xOffset
+  const centerBandHalf = TAIWAN_COMPANY.width * 0.1
+  const fadeMargin = 170
+  const dx = Math.abs(playerCenterX - companyCenter)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 520
+  const cardH = 390
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 470
+
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.95)
+
+  const imageW = 350
+  const imageH = 250
+  const imageX = x + (cardW - imageW) / 2
+  const imageY = cardY + 120
+  drawStoryImageWithOutline(ctx, companyStoryImage, imageX, imageY, imageW, imageH, alpha)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  ctx.font = '700 26px system-ui'
+  ctx.textAlign = 'center'
+  ctx.fillText('Tech Career Chapter', x + cardW / 2, cardY + 50)
+  ctx.font = '600 19px system-ui'
+  ctx.fillText('Worked in software and tech for nearly five years,', x + cardW / 2, cardY + 84)
+  ctx.fillText('blending technical execution with B2B collaboration.', x + cardW / 2, cardY + 112)
+  ctx.textAlign = 'left'
+}
+
+function drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, travel, time) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'melbourne-master') return
+
+  const playerCenterX = player.x + player.w / 2
+  const monashCenter = stage.start + MELBOURNE_STUDY.xOffset
+  const centerBandHalf = MELBOURNE_STUDY.width * 0.1
+  const fadeMargin = 170
+  const dx = Math.abs(playerCenterX - monashCenter)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 500
+  const cardH = 330
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 430
+
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.15)
+
+  const imageW = 200
+  const imageH = 300
+  const imageX = x + 20
+  const imageY = cardY + 16
+  drawStoryImageWithOutline(ctx, monashStoryImage, imageX, imageY, imageW, imageH, alpha)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  const textX = imageX + imageW + 28
+  const textMaxW = cardW - (textX - x) - 24
+  ctx.font = '700 24px system-ui'
+  ctx.fillText("Master's in IT at Monash", textX, cardY + 40, textMaxW)
+  ctx.font = '600 19px system-ui'
+  drawWrappedText(
+    ctx,
+    'Pursuing a Master of IT to strengthen my software career, graduating with the Thesis stream and Distinction, while also participating in peer mentor and volunteer programs.',
+    textX,
+    cardY + 80,
+    textMaxW,
+    30,
+  )
+}
+
+function drawHospitalStoryCard(
+  ctx,
+  camera,
+  player,
+  world,
+  currentStageIndex,
+  travel,
+  birthDropActive,
+  time,
+) {
+  if (travel?.active || birthDropActive) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'taiwan-born') return
+
+  const playerCenterX = player.x + player.w / 2
+  const hospitalStart = HOSPITAL.x
+  const hospitalEnd = HOSPITAL.x + HOSPITAL.width
+  const hospitalCenter = (hospitalStart + hospitalEnd) / 2
+  const centerBandHalf = (hospitalEnd - hospitalStart) * 0.1
+  const fadeMargin = 170
+  const dx = Math.abs(playerCenterX - hospitalCenter)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 520
+  const cardH = 92
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 208
+
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.35)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  ctx.font = '700 22px system-ui'
+  ctx.textAlign = 'center'
+  ctx.fillText('Born in Taiwan, Hsinchu, 1992, July', x + cardW / 2, cardY + 58)
+  ctx.textAlign = 'left'
 }
 
 export function renderScene(ctx, state) {
-  const { camera, world, mode, portal, player, currentStageIndex, sprites, characterKey, time, travel } =
-    state
+  const {
+    camera,
+    world,
+    mode,
+    portal,
+    player,
+    currentStageIndex,
+    sprites,
+    characterKey,
+    time,
+    travel,
+    birthDropActive,
+  } = state
   const stageIndex = Math.max(currentStageIndex, 0)
   const stage = STAGES[stageIndex]
 
@@ -536,9 +970,15 @@ export function renderScene(ctx, state) {
     drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel)
   }
 
-  const label = characterKey === 'traveler' ? '' : 'Alan'
+  const label = ''
   drawCharacter(ctx, player, camera, sprites[characterKey], label, characterKey, world)
-  drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, travel)
+  drawHospitalStoryCard(ctx, camera, player, world, currentStageIndex, travel, birthDropActive, time)
+  drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
+  drawSchoolStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
+  drawNtuStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
+  drawMilitaryStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
+  drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
+  drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
 
   const isSpaceStage = stage.id === 'space'
   ctx.fillStyle = isSpaceStage ? 'rgba(255,255,255,0.95)' : '#0f0f0f'
