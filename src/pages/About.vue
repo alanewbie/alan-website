@@ -9,18 +9,26 @@
     >
       Restart
     </button>
-
-    <div class="pointer-events-none absolute right-6 bottom-5 text-white text-2xl font-extrabold">
-      <p>Use ↑↓←→ to control</p>
-    </div>
   </section>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+import Swal from 'sweetalert2'
 import { useAboutGame } from '../features/about-game/useAboutGame'
 
 const canvasRef = ref(null)
 
 const { restartGame } = useAboutGame(canvasRef)
+
+onMounted(() => {
+  Swal.fire({
+    title: 'Welcome to the Journey',
+    html: 'Use <b>↑ ↓ ← →</b> to move.<br><br>Spend 1 minute to explore the highlights of my life.',
+    icon: 'info',
+    confirmButtonText: 'Start',
+    confirmButtonColor: '#1f477a',
+    background: '#f8fafc',
+  })
+})
 </script>

@@ -30,6 +30,8 @@ const monash2Image = new Image()
 monash2Image.src = new URL('../../assets/game/monash2.png', import.meta.url).href
 const monashStoryImage = new Image()
 monashStoryImage.src = new URL('../../assets/game/monashpic.png', import.meta.url).href
+const questionImage = new Image()
+questionImage.src = new URL('../../assets/game/question.png', import.meta.url).href
 
 const taiwanFlagImage = new Image()
 taiwanFlagImage.src = new URL('../../assets/game/Taiwan.png', import.meta.url).href
@@ -398,6 +400,58 @@ function drawLandmarks(ctx, camera, world) {
     drawBillboard(ctx, monash2Image, camera, melbourne.start + 620, 320, 235, { yOffset: 52 })
     drawBillboard(ctx, monashImage, camera, melbourne.start + 250, 330, 250, { yOffset: 55 })
   }
+}
+
+function drawNextJourneyHint(ctx, camera, mode, time) {
+  if (mode !== 'play') return
+
+  const lastStage = STAGES[STAGES.length - 1]
+  if (!lastStage || !isStageVisible(lastStage.id, mode)) return
+
+  const markerX = lastStage.end - 345
+  const bob = Math.sin(time * 3.3) * 9
+  const markerLift = 180 + bob
+
+  drawBillboard(ctx, questionImage, camera, markerX, 96, 150, {
+    worldY: markerLift,
+    yOffset: 8,
+  })
+}
+
+function drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel, time) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'melbourne-master') return
+
+  const playerCenterX = player.x + player.w / 2
+  const markerX = stage.end - 345
+  const centerBandHalf = 100
+  const fadeMargin = 190
+  const dx = Math.abs(playerCenterX - markerX)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 300
+  const cardH = 40
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 130
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.55)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  ctx.font = '700 18px system-ui'
+  ctx.textAlign = 'center'
+  ctx.fillText("What's the next journey?", x + cardW / 2, cardY + 28)
+  ctx.textAlign = 'left'
 }
 
 function getFlagConfig(stageId) {
@@ -920,8 +974,8 @@ function drawHospitalStoryCard(
   if (alpha <= 0.01) return
 
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 520
-  const cardH = 92
+  const cardW = 430
+  const cardH = 70
   const x = anchor.x - cardW / 2
   const y = anchor.y - 208
 
@@ -930,7 +984,7 @@ function drawHospitalStoryCard(
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
   ctx.font = '700 22px system-ui'
   ctx.textAlign = 'center'
-  ctx.fillText('Born in Taiwan, Hsinchu, 1992, July', x + cardW / 2, cardY + 58)
+  ctx.fillText('Born in Taiwan, Hsinchu, 1992', x + cardW / 2, cardY + 45)
   ctx.textAlign = 'left'
 }
 
@@ -966,19 +1020,30 @@ export function renderScene(ctx, state) {
   } else {
     drawAirports(ctx, camera, mode)
     drawLandmarks(ctx, camera, world)
+    drawNextJourneyHint(ctx, camera, mode, time)
     drawFlags(ctx, camera, mode, time)
     drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel)
   }
 
   const label = ''
   drawCharacter(ctx, player, camera, sprites[characterKey], label, characterKey, world)
-  drawHospitalStoryCard(ctx, camera, player, world, currentStageIndex, travel, birthDropActive, time)
+  drawHospitalStoryCard(
+    ctx,
+    camera,
+    player,
+    world,
+    currentStageIndex,
+    travel,
+    birthDropActive,
+    time,
+  )
   drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawSchoolStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawNtuStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawMilitaryStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
+  drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel, time)
 
   const isSpaceStage = stage.id === 'space'
   ctx.fillStyle = isSpaceStage ? 'rgba(255,255,255,0.95)' : '#0f0f0f'

@@ -18,46 +18,47 @@
           </div>
         </div>
       </div>
-
-      <div class="absolute left-1/2 -bottom-20 sm:-bottom-24 md:-bottom-28 -translate-x-1/2 z-40">
-        <img
-          src="../assets/profile.png"
-          alt="Alan Tseng"
-          class="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-full object-cover border-4 border-white"
-        />
-      </div>
     </section>
     <!-- Personal Information -->
-    <section class="pt-36 pb-20 border-t bg-black text-white">
-      <div :ref="(el) => setRevealEl(el)" class="reveal max-w-5xl mx-auto px-6 text-center">
-        <h2 class="text-4xl font-semibold mb-8">About Me</h2>
-        <div class="grid md:grid-cols-3 gap-8 text-left">
-          <div>
-            <h3 class="text-lg font-semibold mb-3">AI & Engineering</h3>
-            <ul class="text-gray-400 space-y-2 text-sm">
-              <li>o Java, Python, JavaScript</li>
-              <li>o Retrieval-Augmented Generation (RAG)</li>
-              <li>o LLM Evaluation & Benchmarking</li>
-              <li>o LangChain / OpenAI API</li>
-            </ul>
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold mb-3">Cloud & Platforms</h3>
-            <ul class="text-gray-400 space-y-2 text-sm">
-              <li>o Azure / AWS / GCP</li>
-              <li>o API & SDK Integration</li>
-              <li>o Enterprise SaaS Deployment</li>
-              <li>o Database & Backend Systems</li>
-            </ul>
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold mb-3">Business & Consulting</h3>
-            <ul class="text-gray-400 space-y-2 text-sm">
-              <li>o Technical Presales & POC</li>
-              <li>o Enterprise Client Consulting</li>
-              <li>o Cross-functional Collaboration</li>
-              <li>o AI Adoption Strategy</li>
-            </ul>
+    <section class="aboutme-section-bg pt-20 pb-20 border-t text-white">
+      <div class="max-w-7xl mx-auto px-6 text-center">
+        <h2 class="text-4xl font-semibold mb-8">Core Skills & Tech Stack</h2>
+        <div class="aboutme-slides">
+          <div
+            v-for="(slide, index) in aboutSlides"
+            :key="slide.id"
+            :ref="(el) => setRevealEl(el)"
+            :class="['reveal', 'aboutme-slide', slide.widthClass]"
+            :style="{ transitionDelay: `${index * 180}ms` }"
+          >
+            <p class="aboutme-slide-title">{{ slide.title }}</p>
+            <p class="aboutme-slide-desc">{{ slide.description }}</p>
+            <div
+              :ref="(el) => setAboutMarqueeMaskRef(slide.id, el)"
+              class="aboutme-marquee-mask"
+              :class="{ 'aboutme-marquee-mask--dragging': isAboutSlideDragging(slide.id) }"
+              @pointerdown="(e) => onAboutMarqueePointerDown(e, slide.id)"
+            >
+              <div
+                class="aboutme-marquee-track"
+                :style="{ transform: `translateX(${getAboutSlideOffset(slide.id)}px)` }"
+              >
+                <div
+                  v-for="(logo, i) in slide.loop"
+                  :key="`${slide.id}-${logo.name}-${i}`"
+                  class="aboutme-logo-item"
+                >
+                  <img
+                    :src="logo.src"
+                    :alt="logo.name"
+                    class="aboutme-logo-image"
+                    loading="lazy"
+                    draggable="false"
+                    @dragstart.prevent
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -174,10 +175,183 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { reactive, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 const heroUrl = new URL('../assets/hero.png', import.meta.url).href
 const roles = ['Technical Presales', 'Software Developer', 'Business Development']
+const aboutLogoModules = import.meta.glob('../assets/aboutme/**/*.{png,jpg,jpeg,webp,svg}', {
+  eager: true,
+  import: 'default',
+})
+const aboutLogoEntries = Object.entries(aboutLogoModules).map(([path, src]) => {
+  const match = path.match(/\.\.\/assets\/aboutme\/([^/]+)\/([^/]+)\.[^.]+$/)
+  if (!match) return null
+  return {
+    folder: match[1],
+    name: match[2],
+    src,
+  }
+})
+
+const aboutLogosByFolder = aboutLogoEntries.filter(Boolean).reduce((acc, item) => {
+  if (!acc[item.folder]) acc[item.folder] = []
+  acc[item.folder].push({ name: item.name, src: item.src })
+  return acc
+}, {})
+
+Object.values(aboutLogosByFolder).forEach((logos) =>
+  logos.sort((a, b) => a.name.localeCompare(b.name)),
+)
+
+const aboutSlideConfig = {
+  cloud: {
+    title: 'Cloud',
+    description: 'Deploying and integrating services across Azure, AWS, and GCP.',
+    widthClass: 'max-w-2xl',
+  },
+  'ai-data': {
+    title: 'AI / Data',
+    description: 'Using AI and data tools for intelligent workflows, modeling, and analysis.',
+    widthClass: 'max-w-5xl',
+  },
+  backend: {
+    title: 'Backend',
+    description: 'Building scalable backend services and APIs with modern engineering practices.',
+    widthClass: 'max-w-5xl',
+  },
+  frontend: {
+    title: 'Frontend',
+    description: 'Creating responsive interfaces with modern JavaScript frameworks and UI tools.',
+    widthClass: 'max-w-5xl',
+  },
+}
+
+const aboutFolderOrder = ['ai-data', 'backend', 'frontend']
+const aboutFolders = Object.keys(aboutLogosByFolder)
+  .filter((folder) => aboutFolderOrder.includes(folder))
+  .sort((a, b) => {
+    const ai = aboutFolderOrder.indexOf(a)
+    const bi = aboutFolderOrder.indexOf(b)
+    if (ai === -1 && bi === -1) return a.localeCompare(b)
+    if (ai === -1) return 1
+    if (bi === -1) return -1
+    return ai - bi
+  })
+
+const aboutSlides = aboutFolders
+  .map((folder) => {
+    const cfg = aboutSlideConfig[folder] ?? {
+      title: folder.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      description: 'Tools and technologies in this area.',
+      widthClass: 'max-w-6xl',
+    }
+    const logos = aboutLogosByFolder[folder] ?? []
+    return {
+      id: folder,
+      title: cfg.title,
+      description: cfg.description,
+      widthClass: cfg.widthClass,
+      logos,
+      loop: [...logos, ...logos],
+    }
+  })
+  .filter((slide) => slide.logos.length > 0)
+
+const aboutMarqueeMasks = ref({})
+const aboutSlideStates = reactive({})
+let marqueeRaf = null
+let lastMarqueeTs = 0
+const marqueeAutoSpeed = 30
+
+function ensureAboutSlideState(id) {
+  if (!aboutSlideStates[id]) {
+    aboutSlideStates[id] = {
+      dragging: false,
+      pointerId: null,
+      startX: 0,
+      startOffset: 0,
+      offset: 0,
+      halfWidth: 0,
+    }
+  }
+  return aboutSlideStates[id]
+}
+
+function setAboutMarqueeMaskRef(id, el) {
+  if (el) aboutMarqueeMasks.value[id] = el
+  else delete aboutMarqueeMasks.value[id]
+}
+
+function normalizeAboutOffset(id, value) {
+  const half = ensureAboutSlideState(id).halfWidth
+  if (!half) return value
+  let next = value
+  while (next <= -half) next += half
+  while (next > 0) next -= half
+  return next
+}
+
+function measureAboutMarquee() {
+  aboutSlides.forEach((slide) => {
+    const maskEl = aboutMarqueeMasks.value[slide.id]
+    if (!maskEl) return
+    const trackEl = maskEl.querySelector('.aboutme-marquee-track')
+    if (!trackEl) return
+    const state = ensureAboutSlideState(slide.id)
+    state.halfWidth = trackEl.scrollWidth / 2
+    state.offset = normalizeAboutOffset(slide.id, state.offset)
+  })
+}
+
+function tickAboutMarquee(ts) {
+  if (!lastMarqueeTs) lastMarqueeTs = ts
+  const dt = (ts - lastMarqueeTs) / 1000
+  lastMarqueeTs = ts
+
+  aboutSlides.forEach((slide) => {
+    const state = ensureAboutSlideState(slide.id)
+    if (!state.dragging) {
+      state.offset = normalizeAboutOffset(slide.id, state.offset - marqueeAutoSpeed * dt)
+    }
+  })
+
+  marqueeRaf = window.requestAnimationFrame(tickAboutMarquee)
+}
+
+function onAboutMarqueePointerMove(e) {
+  aboutSlides.forEach((slide) => {
+    const state = ensureAboutSlideState(slide.id)
+    if (!state.dragging || e.pointerId !== state.pointerId) return
+    const dx = e.clientX - state.startX
+    state.offset = normalizeAboutOffset(slide.id, state.startOffset + dx)
+  })
+}
+
+function onAboutMarqueePointerUp(e) {
+  aboutSlides.forEach((slide) => {
+    const state = ensureAboutSlideState(slide.id)
+    if (!state.dragging || e.pointerId !== state.pointerId) return
+    state.dragging = false
+    state.pointerId = null
+  })
+}
+
+function onAboutMarqueePointerDown(e, slideId) {
+  if (e.button !== 0) return
+  const state = ensureAboutSlideState(slideId)
+  state.dragging = true
+  state.pointerId = e.pointerId
+  state.startX = e.clientX
+  state.startOffset = state.offset
+}
+
+function getAboutSlideOffset(id) {
+  return ensureAboutSlideState(id).offset
+}
+
+function isAboutSlideDragging(id) {
+  return ensureAboutSlideState(id).dragging
+}
 
 // typing
 const typedText = ref('')
@@ -301,6 +475,13 @@ function onKeydown(e) {
 onMounted(async () => {
   typeEffect()
   await nextTick()
+  aboutSlides.forEach((slide) => ensureAboutSlideState(slide.id))
+  measureAboutMarquee()
+  window.addEventListener('resize', measureAboutMarquee)
+  window.addEventListener('pointermove', onAboutMarqueePointerMove)
+  window.addEventListener('pointerup', onAboutMarqueePointerUp)
+  window.addEventListener('pointercancel', onAboutMarqueePointerUp)
+  marqueeRaf = window.requestAnimationFrame(tickAboutMarquee)
 
   observer = new IntersectionObserver(
     (entries) => {
@@ -321,8 +502,13 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('resize', measureAboutMarquee)
+  window.removeEventListener('pointermove', onAboutMarqueePointerMove)
+  window.removeEventListener('pointerup', onAboutMarqueePointerUp)
+  window.removeEventListener('pointercancel', onAboutMarqueePointerUp)
   observer?.disconnect()
   if (typingTimer) window.clearTimeout(typingTimer)
+  if (marqueeRaf) window.cancelAnimationFrame(marqueeRaf)
 })
 </script>
 
@@ -338,5 +524,116 @@ onBeforeUnmount(() => {
 .reveal--in {
   opacity: 1;
   transform: translateY(0);
+}
+
+.aboutme-slides {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  align-items: center;
+}
+
+.aboutme-section-bg {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+    url('../assets/background.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.aboutme-intro {
+  margin: -0.35rem auto 0.65rem;
+  max-width: 760px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.aboutme-slide {
+  width: 100%;
+}
+
+.aboutme-slide-title {
+  margin-bottom: 0.2rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.aboutme-slide-desc {
+  margin: 0 auto 0.42rem;
+  max-width: 720px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.aboutme-marquee-mask {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  padding: 0.7rem 0.6rem;
+  background: #fff;
+  border-radius: 16px;
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.aboutme-marquee-mask--dragging {
+  cursor: grabbing;
+}
+
+.aboutme-marquee-mask::before,
+.aboutme-marquee-mask::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.aboutme-marquee-mask::before {
+  left: 0;
+  background: linear-gradient(to right, #000 0%, transparent 100%);
+}
+
+.aboutme-marquee-mask::after {
+  right: 0;
+  background: linear-gradient(to left, #000 0%, transparent 100%);
+}
+
+.aboutme-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 1rem;
+  user-select: none;
+}
+
+.aboutme-logo-item {
+  width: 170px;
+  height: 96px;
+  border: 1px solid rgba(17, 24, 39, 0.15);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.98);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem;
+}
+
+.aboutme-logo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(1.02);
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  pointer-events: none;
 }
 </style>
