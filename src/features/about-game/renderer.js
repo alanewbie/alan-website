@@ -212,6 +212,14 @@ function drawStoryImageWithOutline(ctx, image, x, y, w, h, alpha) {
   ctx.restore()
 }
 
+function getStoryCardScale(camera) {
+  return Math.max(0.62, Math.min(1, camera.w / 1600))
+}
+
+function storyFont(weight, size, scale) {
+  return `${weight} ${Math.max(12, Math.round(size * scale))}px system-ui`
+}
+
 function drawStars(ctx, stage, camera) {
   if (stage.scenery !== 'stars') return
 
@@ -407,12 +415,13 @@ function drawNextJourneyHint(ctx, camera, mode, time) {
 
   const lastStage = STAGES[STAGES.length - 1]
   if (!lastStage || !isStageVisible(lastStage.id, mode)) return
+  const s = getStoryCardScale(camera)
 
   const markerX = lastStage.end - 345
   const bob = Math.sin(time * 3.3) * 9
-  const markerLift = 180 + bob
+  const markerLift = 180 * s + bob
 
-  drawBillboard(ctx, questionImage, camera, markerX, 96, 150, {
+  drawBillboard(ctx, questionImage, camera, markerX, 96 * s, 150 * s, {
     worldY: markerLift,
     yOffset: 8,
   })
@@ -440,17 +449,18 @@ function drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel
   }
   if (alpha <= 0.01) return
 
+  const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 300
-  const cardH = 40
+  const cardW = 300 * s
+  const cardH = 40 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 130
+  const y = anchor.y - 130 * s
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.55)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  ctx.font = '700 18px system-ui'
+  ctx.font = storyFont(700, 18, s)
   ctx.textAlign = 'center'
-  ctx.fillText("What's the next journey?", x + cardW / 2, cardY + 28)
+  ctx.fillText("What's the next journey?", x + cardW / 2, cardY + 28 * s)
   ctx.textAlign = 'left'
 }
 
@@ -670,29 +680,30 @@ function drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, tra
   }
   if (alpha <= 0.01) return
 
+  const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX - 20, 110, 0, camera)
-  const cardW = 480
-  const cardH = 370
+  const cardW = 480 * s
+  const cardH = 370 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 500
+  const y = anchor.y - 500 * s
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.15)
 
-  const imageW = 350
-  const imageH = 240
-  const contentTop = cardY + 16
-  const titleY = contentTop + 24
-  const bodyLine1Y = contentTop + 58
-  const bodyLine2Y = contentTop + 86
+  const imageW = 350 * s
+  const imageH = 240 * s
+  const contentTop = cardY + 16 * s
+  const titleY = contentTop + 24 * s
+  const bodyLine1Y = contentTop + 58 * s
+  const bodyLine2Y = contentTop + 86 * s
   const imageX = x + (cardW - imageW) / 2
-  const imageY = contentTop + 98
+  const imageY = contentTop + 98 * s
   drawStoryImageWithOutline(ctx, terracesStoryImage, imageX, imageY, imageW, imageH, alpha)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  ctx.font = '700 26px system-ui'
+  ctx.font = storyFont(700, 26, s)
   ctx.textAlign = 'center'
   ctx.fillText('A New Home', x + cardW / 2, titleY)
-  ctx.font = '600 19px system-ui'
+  ctx.font = storyFont(600, 19, s)
   ctx.fillText('Relocated to Indonesia with my family,', x + cardW / 2, bodyLine1Y)
   ctx.fillText('where I spent my growing-up years.', x + cardW / 2, bodyLine2Y)
   ctx.textAlign = 'left'
@@ -720,27 +731,28 @@ function drawSchoolStoryCard(ctx, camera, player, world, currentStageIndex, trav
   }
   if (alpha <= 0.01) return
 
+  const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 530
-  const cardH = 390
+  const cardW = 530 * s
+  const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470
+  const y = anchor.y - 470 * s
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.35)
 
-  const imageW = 380
-  const imageH = 250
+  const imageW = 380 * s
+  const imageH = 250 * s
   const imageX = x + (cardW - imageW) / 2
-  const imageY = cardY + 120
+  const imageY = cardY + 120 * s
   drawStoryImageWithOutline(ctx, schoolStoryImage, imageX, imageY, imageW, imageH, alpha)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  ctx.font = '700 26px system-ui'
+  ctx.font = storyFont(700, 26, s)
   ctx.textAlign = 'center'
-  ctx.fillText('School Years in Indonesia', x + cardW / 2, cardY + 50)
-  ctx.font = '600 19px system-ui'
-  ctx.fillText('Studied from kindergarten to Grade 12,', x + cardW / 2, cardY + 84)
-  ctx.fillText('Guess which one is me!', x + cardW / 2, cardY + 112)
+  ctx.fillText('School Years in Indonesia', x + cardW / 2, cardY + 50 * s)
+  ctx.font = storyFont(600, 19, s)
+  ctx.fillText('Studied from kindergarten to Grade 12,', x + cardW / 2, cardY + 84 * s)
+  ctx.fillText('Guess which one is me!', x + cardW / 2, cardY + 112 * s)
   ctx.textAlign = 'left'
 }
 
@@ -766,27 +778,28 @@ function drawNtuStoryCard(ctx, camera, player, world, currentStageIndex, travel,
   }
   if (alpha <= 0.01) return
 
+  const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 530
-  const cardH = 390
+  const cardW = 530 * s
+  const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470
+  const y = anchor.y - 470 * s
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.55)
 
-  const imageW = 380
-  const imageH = 250
+  const imageW = 380 * s
+  const imageH = 250 * s
   const imageX = x + (cardW - imageW) / 2
-  const imageY = cardY + 120
+  const imageY = cardY + 120 * s
   drawStoryImageWithOutline(ctx, ntuStoryImage, imageX, imageY, imageW, imageH, alpha)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  ctx.font = '700 24px system-ui'
+  ctx.font = storyFont(700, 24, s)
   ctx.textAlign = 'center'
-  ctx.fillText('Back in Taiwan for University', x + cardW / 2, cardY + 50)
-  ctx.font = '600 19px system-ui'
-  ctx.fillText("Pursued a Bachelor's in Landscape Architecture", x + cardW / 2, cardY + 84)
-  ctx.fillText('at National Taiwan University.', x + cardW / 2, cardY + 112)
+  ctx.fillText('Back in Taiwan for University', x + cardW / 2, cardY + 50 * s)
+  ctx.font = storyFont(600, 19, s)
+  ctx.fillText("Pursued a Bachelor's in Landscape Architecture", x + cardW / 2, cardY + 84 * s)
+  ctx.fillText('at National Taiwan University.', x + cardW / 2, cardY + 112 * s)
   ctx.textAlign = 'left'
 }
 
@@ -812,33 +825,34 @@ function drawMilitaryStoryCard(ctx, camera, player, world, currentStageIndex, tr
   }
   if (alpha <= 0.01) return
 
+  const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 520
-  const cardH = 360
+  const cardW = 520 * s
+  const cardH = 360 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 440
+  const y = anchor.y - 440 * s
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.75)
 
-  const imageW = 230
-  const imageH = 300
-  const imageX = x + 24
-  const imageY = cardY + 30
+  const imageW = 230 * s
+  const imageH = 300 * s
+  const imageX = x + 24 * s
+  const imageY = cardY + 30 * s
   drawStoryImageWithOutline(ctx, militaryStoryImage, imageX, imageY, imageW, imageH, alpha)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  const textX = imageX + imageW + 30
-  const textMaxW = cardW - (textX - x) - 26
-  ctx.font = '700 24px system-ui'
-  ctx.fillText('Military Service Year', textX, cardY + 70, textMaxW)
-  ctx.font = '600 19px system-ui'
+  const textX = imageX + imageW + 30 * s
+  const textMaxW = cardW - (textX - x) - 26 * s
+  ctx.font = storyFont(700, 24, s)
+  ctx.fillText('Military Service Year', textX, cardY + 70 * s, textMaxW)
+  ctx.font = storyFont(600, 19, s)
   drawWrappedText(
     ctx,
     "Completed one year of mandatory military service, and was selected for the honor guard at Taiwan's garrison points.",
     textX,
-    cardY + 112,
+    cardY + 112 * s,
     textMaxW,
-    30,
+    Math.max(18, Math.round(30 * s)),
   )
 }
 
@@ -864,27 +878,28 @@ function drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, tra
   }
   if (alpha <= 0.01) return
 
+  const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 520
-  const cardH = 390
+  const cardW = 520 * s
+  const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470
+  const y = anchor.y - 470 * s
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.95)
 
-  const imageW = 350
-  const imageH = 250
+  const imageW = 350 * s
+  const imageH = 250 * s
   const imageX = x + (cardW - imageW) / 2
-  const imageY = cardY + 120
+  const imageY = cardY + 120 * s
   drawStoryImageWithOutline(ctx, companyStoryImage, imageX, imageY, imageW, imageH, alpha)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  ctx.font = '700 26px system-ui'
+  ctx.font = storyFont(700, 26, s)
   ctx.textAlign = 'center'
-  ctx.fillText('Tech Career Chapter', x + cardW / 2, cardY + 50)
-  ctx.font = '600 19px system-ui'
-  ctx.fillText('Worked in software and tech for nearly five years,', x + cardW / 2, cardY + 84)
-  ctx.fillText('blending technical execution with B2B collaboration.', x + cardW / 2, cardY + 112)
+  ctx.fillText('Tech Career Chapter', x + cardW / 2, cardY + 50 * s)
+  ctx.font = storyFont(600, 19, s)
+  ctx.fillText('Worked in software and tech for nearly five years,', x + cardW / 2, cardY + 84 * s)
+  ctx.fillText('blending technical execution with B2B collaboration.', x + cardW / 2, cardY + 112 * s)
   ctx.textAlign = 'left'
 }
 
@@ -910,33 +925,34 @@ function drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, trav
   }
   if (alpha <= 0.01) return
 
+  const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 500
-  const cardH = 330
+  const cardW = 500 * s
+  const cardH = 330 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 430
+  const y = anchor.y - 430 * s
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.15)
 
-  const imageW = 200
-  const imageH = 300
-  const imageX = x + 20
-  const imageY = cardY + 16
+  const imageW = 200 * s
+  const imageH = 300 * s
+  const imageX = x + 20 * s
+  const imageY = cardY + 16 * s
   drawStoryImageWithOutline(ctx, monashStoryImage, imageX, imageY, imageW, imageH, alpha)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  const textX = imageX + imageW + 28
-  const textMaxW = cardW - (textX - x) - 24
-  ctx.font = '700 24px system-ui'
-  ctx.fillText("Master's in IT at Monash", textX, cardY + 40, textMaxW)
-  ctx.font = '600 19px system-ui'
+  const textX = imageX + imageW + 28 * s
+  const textMaxW = cardW - (textX - x) - 24 * s
+  ctx.font = storyFont(700, 24, s)
+  ctx.fillText("Master's in IT at Monash", textX, cardY + 40 * s, textMaxW)
+  ctx.font = storyFont(600, 19, s)
   drawWrappedText(
     ctx,
     'Pursuing a Master of IT to strengthen my software career, graduating with the Thesis stream and Distinction, while also participating in peer mentor and volunteer programs.',
     textX,
-    cardY + 80,
+    cardY + 80 * s,
     textMaxW,
-    30,
+    Math.max(18, Math.round(30 * s)),
   )
 }
 
@@ -973,18 +989,19 @@ function drawHospitalStoryCard(
   }
   if (alpha <= 0.01) return
 
+  const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 430
-  const cardH = 70
+  const cardW = 430 * s
+  const cardH = 70 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 208
+  const y = anchor.y - 208 * s
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.35)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
-  ctx.font = '700 22px system-ui'
+  ctx.font = storyFont(700, 22, s)
   ctx.textAlign = 'center'
-  ctx.fillText('Born in Taiwan, Hsinchu, 1992', x + cardW / 2, cardY + 45)
+  ctx.fillText('Born in Taiwan, Hsinchu, 1992', x + cardW / 2, cardY + 45 * s)
   ctx.textAlign = 'left'
 }
 
