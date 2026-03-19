@@ -82,11 +82,17 @@ const ISO = {
   laneDepth: 165,
 }
 
+function isPhoneLikeCamera(camera) {
+  return Math.min(camera.w, camera.h) <= 500 && Math.max(camera.w, camera.h) <= 1100
+}
+
 function getSceneScale(camera) {
   const widthScale = camera.w / 1600
   const heightScale = camera.h / 980
   const rawScale = Math.min(widthScale, heightScale) * 0.9
-  return Math.max(0.7, Math.min(0.9, rawScale))
+  const baseScale = Math.max(0.7, Math.min(0.9, rawScale))
+  const mobileScaleFactor = isPhoneLikeCamera(camera) ? 4 / 5 : 1
+  return baseScale * mobileScaleFactor
 }
 
 function createFlippedFlagImage(image) {
@@ -125,7 +131,7 @@ function projectPoint(worldX, worldZ, worldY, camera) {
   const dx = worldX - camera.x
   return {
     x: ISO.originX + dx * ISO.xScale + worldZ * ISO.depthX,
-    y: camera.h * ISO.originYRatio - dx * ISO.yScale + worldZ * ISO.depthY - worldY,
+    y: camera.h * ISO.originYRatio - dx * ISO.yScale + worldZ * ISO.depthY - worldY - camera.y,
   }
 }
 
@@ -220,11 +226,15 @@ function drawStoryImageWithOutline(ctx, image, x, y, w, h, alpha) {
 }
 
 function getStoryCardScale(camera) {
+  if (isPhoneLikeCamera(camera)) {
+    return Math.max(0.35, Math.min(0.6, getSceneScale(camera)))
+  }
   return Math.max(0.52, Math.min(0.9, getSceneScale(camera)))
 }
 
 function storyFont(weight, size, scale) {
-  return `${weight} ${Math.max(11, Math.round(size * scale))}px system-ui`
+  const minSize = scale < 0.65 ? 8 : 11
+  return `${weight} ${Math.max(minSize, Math.round(size * scale))}px system-ui`
 }
 
 function drawStars(ctx, stage, camera) {
@@ -731,6 +741,50 @@ function drawCharacter(ctx, player, camera, sprite, label, characterKey, world) 
   }
 }
 
+function drawSpiritPortalGuideArrow(ctx, player, camera, portal, world, sceneScale, time) {
+  const playerCenterX = player.x + player.w / 2
+  const playerLift = world.groundY - player.h - player.y
+  const spiritBase = projectPoint(playerCenterX, 110, playerLift, camera)
+  const portalLift = world.groundY - portal.y
+  const portalPoint = projectPoint(portal.x, 98, portalLift, camera)
+
+  const dx = portalPoint.x - spiritBase.x
+  const dy = portalPoint.y - spiritBase.y
+  const len = Math.hypot(dx, dy) || 1
+  const ux = dx / len
+  const uy = dy / len
+
+  const startX = spiritBase.x + ux * 26 * sceneScale
+  const startY = spiritBase.y - 20 * sceneScale + uy * 26 * sceneScale
+  const arrowLen = 30 * sceneScale
+  const floatOffset = Math.sin(time * 5.2) * 6 * sceneScale
+  const tipX = startX + ux * (arrowLen + floatOffset)
+  const tipY = startY + uy * (arrowLen + floatOffset)
+  const px = -uy
+  const py = ux
+  const head = 8.5 * sceneScale
+
+  ctx.save()
+  ctx.shadowColor = 'rgba(255,235,140,0.55)'
+  ctx.shadowBlur = 6 * sceneScale
+  ctx.strokeStyle = 'rgba(255,235,140,0.95)'
+  ctx.lineWidth = 4.2 * sceneScale
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.moveTo(startX, startY)
+  ctx.lineTo(tipX, tipY)
+  ctx.stroke()
+
+  ctx.fillStyle = 'rgba(255,235,140,0.95)'
+  ctx.beginPath()
+  ctx.moveTo(tipX, tipY)
+  ctx.lineTo(tipX - ux * head + px * head * 0.7, tipY - uy * head + py * head * 0.7)
+  ctx.lineTo(tipX - ux * head - px * head * 0.7, tipY - uy * head - py * head * 0.7)
+  ctx.closePath()
+  ctx.fill()
+  ctx.restore()
+}
+
 function drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, travel, time) {
   if (travel?.active) return
   const stage = STAGES[currentStageIndex]
@@ -760,7 +814,7 @@ function drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, tra
   const cardW = 480 * s
   const cardH = 370 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 500 * s - 50
+  const y = anchor.y - 500 * s - 30
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.15)
 
@@ -811,7 +865,7 @@ function drawSchoolStoryCard(ctx, camera, player, world, currentStageIndex, trav
   const cardW = 530 * s
   const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470 * s - 50
+  const y = anchor.y - 470 * s - 40
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.35)
 
@@ -858,7 +912,7 @@ function drawNtuStoryCard(ctx, camera, player, world, currentStageIndex, travel,
   const cardW = 530 * s
   const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470 * s - 50
+  const y = anchor.y - 470 * s - 40
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.55)
 
@@ -958,7 +1012,7 @@ function drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, tra
   const cardW = 520 * s
   const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470 * s - 50
+  const y = anchor.y - 470 * s - 40
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.95)
 
@@ -1124,6 +1178,9 @@ export function renderScene(ctx, state) {
 
   const label = ''
   drawCharacter(ctx, player, camera, sprites[characterKey], label, characterKey, world)
+  if (mode === 'intro' && characterKey === 'spirit') {
+    drawSpiritPortalGuideArrow(ctx, player, camera, portal, world, sceneScale, time)
+  }
   drawHospitalStoryCard(
     ctx,
     camera,

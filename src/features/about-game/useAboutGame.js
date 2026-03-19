@@ -116,6 +116,7 @@ export function useAboutGame(canvasRef) {
       w: 0,
       h: 0,
     },
+    isPhoneViewport: false,
     portal: {
       x: PORTAL.x,
       y: 0,
@@ -230,6 +231,10 @@ export function useAboutGame(canvasRef) {
 
     state.camera.w = rect.width
     state.camera.h = rect.height
+    state.isPhoneViewport =
+      navigator.maxTouchPoints > 0 &&
+      (window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(max-width: 1024px)').matches)
     state.world.groundY = state.world.height - WORLD.groundPadding
     state.portal.x = STAGES[0].end
     state.portal.y = state.world.groundY - 200
@@ -500,16 +505,18 @@ export function useAboutGame(canvasRef) {
 
   function updateCamera(dt) {
     const follow = state.mode === 'intro' ? 8 : 11
-    const targetX = state.player.x + state.player.w / 2 - state.camera.w / 2
-    const targetY =
-      state.mode === 'intro' ? state.player.y + state.player.h / 2 - state.camera.h / 2 : 0
+    const xAnchor = state.isPhoneViewport ? 0.1 : 0.5
+    const targetX = state.player.x + state.player.w / 2 - state.camera.w * xAnchor
+    const targetY = state.mode === 'intro' ? state.player.y + state.player.h / 2 - state.camera.h / 2 : 0
 
     state.camera.x += (targetX - state.camera.x) * Math.min(1, follow * dt)
     state.camera.x = clamp(state.camera.x, 0, Math.max(0, state.world.width - state.camera.w))
 
-    if (state.mode === 'intro') {
+    if (state.mode === 'intro' && !state.isPhoneViewport) {
       state.camera.y += (targetY - state.camera.y) * Math.min(1, follow * dt)
       state.camera.y = clamp(state.camera.y, 0, Math.max(0, state.world.height - state.camera.h))
+    } else if (state.mode === 'intro' && state.isPhoneViewport) {
+      state.camera.y = 0
     } else {
       state.camera.y = 0
     }
@@ -534,27 +541,41 @@ export function useAboutGame(canvasRef) {
     state.rafId = requestAnimationFrame(loop)
   }
 
-  function onKeyDown(e) {
-    const block = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ']
-    if (block.includes(e.key)) e.preventDefault()
-    keys.add(e.key)
-    const isJumpKey = e.code === 'Space' || e.key === 'ArrowUp'
-
-    if (
-      isJumpKey &&
+  function canTriggerJump() {
+    return (
       state.mode === 'play' &&
       !state.travel.active &&
       !state.birthDropActive &&
       state.autoJumpLockTimer <= 0 &&
       state.player.onGround
-    ) {
+    )
+  }
+
+  function triggerJumpIfAllowed(key, code = '') {
+    const isJumpKey = code === 'Space' || key === 'ArrowUp'
+    if (isJumpKey && canTriggerJump()) {
       state.player.vy = -PLAYER.jumpVelocity
       state.player.onGround = false
     }
   }
 
+  function setControlKey(key, pressed, code = '') {
+    if (pressed) {
+      keys.add(key)
+      triggerJumpIfAllowed(key, code)
+      return
+    }
+    keys.delete(key)
+  }
+
+  function onKeyDown(e) {
+    const block = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' ']
+    if (block.includes(e.key)) e.preventDefault()
+    setControlKey(e.key, true, e.code)
+  }
+
   function onKeyUp(e) {
-    keys.delete(e.key)
+    setControlKey(e.key, false)
   }
 
   function restartGame() {
@@ -599,5 +620,6 @@ export function useAboutGame(canvasRef) {
     helperLabel,
     modeLabel,
     restartGame,
+    setControlKey,
   }
 }

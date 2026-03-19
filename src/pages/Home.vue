@@ -22,7 +22,7 @@
     <!-- Personal Information -->
     <section class="aboutme-section-bg pt-20 pb-20 border-t text-white">
       <div class="max-w-7xl mx-auto px-6 text-center">
-        <h2 class="text-4xl font-semibold mb-8">Core Skills & Tech Stack</h2>
+        <h2 class="text-4xl font-semibold mb-8">Tech Stack</h2>
         <div class="aboutme-slides">
           <div
             v-for="(slide, index) in aboutSlides"
@@ -155,7 +155,9 @@
                 >
               </button>
             </div>
-            <div class="max-h-[calc(85vh-3.25rem)] overflow-auto p-4 flex items-center justify-center">
+            <div
+              class="max-h-[calc(85vh-3.25rem)] overflow-auto p-4 flex items-center justify-center"
+            >
               <img
                 :src="lightbox.src"
                 :alt="lightbox.title"
@@ -177,7 +179,9 @@
 <script setup>
 import { reactive, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
-const heroUrl = new URL('../assets/hero.png', import.meta.url).href
+const desktopHeroUrl = new URL('../assets/hero.png', import.meta.url).href
+const smartphoneHeroUrl = new URL('../assets/smartphonehero.png', import.meta.url).href
+const heroUrl = ref(desktopHeroUrl)
 const roles = ['Technical Presales', 'Software Developer', 'Business Development']
 const aboutLogoModules = import.meta.glob('../assets/aboutme/**/*.{png,jpg,jpeg,webp,svg}', {
   eager: true,
@@ -387,6 +391,14 @@ const setRevealEl = (el) => {
 
 let observer = null
 
+function isSmartphoneViewport() {
+  return window.matchMedia('(max-width: 768px)').matches
+}
+
+function updateHeroForViewport() {
+  heroUrl.value = isSmartphoneViewport() ? smartphoneHeroUrl : desktopHeroUrl
+}
+
 // highlights
 const highlights = [
   {
@@ -473,6 +485,7 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
+  updateHeroForViewport()
   typeEffect()
   await nextTick()
   aboutSlides.forEach((slide) => ensureAboutSlideState(slide.id))
@@ -498,6 +511,7 @@ onMounted(async () => {
   revealEls.forEach((el) => observer.observe(el))
 
   window.addEventListener('keydown', onKeydown)
+  window.addEventListener('resize', updateHeroForViewport)
 })
 
 onBeforeUnmount(() => {
@@ -506,6 +520,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointermove', onAboutMarqueePointerMove)
   window.removeEventListener('pointerup', onAboutMarqueePointerUp)
   window.removeEventListener('pointercancel', onAboutMarqueePointerUp)
+  window.removeEventListener('resize', updateHeroForViewport)
   observer?.disconnect()
   if (typingTimer) window.clearTimeout(typingTimer)
   if (marqueeRaf) window.cancelAnimationFrame(marqueeRaf)
@@ -535,8 +550,7 @@ onBeforeUnmount(() => {
 
 .aboutme-section-bg {
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
-    url('../assets/background.svg');
+    linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)), url('../assets/background.svg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

@@ -12,8 +12,8 @@
           />
           <h1 class="mt-5 text-3xl font-bold">Get In Touch</h1>
           <p class="mt-2 text-sm text-white/70">
-            Open to Software Engineering, AI, Consulting, and Presales roles across Australia,
-            spanning both technical development and client-facing functions.
+            Open to Software Engineering, Consulting, and Presales roles, spanning both technical
+            development and client-facing functions.
           </p>
         </div>
 
