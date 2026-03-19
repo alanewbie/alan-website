@@ -1,8 +1,8 @@
 <template>
-  <main class="min-h-[calc(100vh-64px)] bg-black text-white">
+  <main class="min-h-[calc(100vh-4rem)] bg-black text-white">
     <section class="mx-auto w-full max-w-6xl px-6 py-14">
       <div
-        class="grid gap-10 rounded-3xl border border-white/10 bg-white/5 p-7 md:grid-cols-[280px_1fr] md:p-10"
+        class="grid gap-10 rounded-3xl border border-white/10 bg-white/5 p-7 md:grid-cols-[17.5rem_1fr] md:p-10"
       >
         <div class="flex flex-col items-center text-center md:items-start md:text-left">
           <img

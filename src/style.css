@@ -1,5 +1,27 @@
 @import 'tailwindcss';
 
+html {
+  font-size: 14.4px;
+}
+
+@media (max-width: 1600px), (max-height: 980px) {
+  html {
+    font-size: 13.5px;
+  }
+}
+
+@media (max-width: 1366px), (max-height: 900px) {
+  html {
+    font-size: 12.6px;
+  }
+}
+
+@media (max-width: 1180px), (max-height: 780px) {
+  html {
+    font-size: 11.7px;
+  }
+}
+
 body {
   background-color: black;
   color: white;

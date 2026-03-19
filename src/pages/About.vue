@@ -1,5 +1,5 @@
 <template>
-  <section class="w-full h-[calc(100vh-64px)] bg-black relative overflow-hidden">
+  <section class="w-full h-[calc(100vh-4rem)] bg-black relative overflow-hidden">
     <canvas ref="canvasRef" class="w-full h-full block"></canvas>
 
     <button

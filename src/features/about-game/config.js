@@ -47,7 +47,7 @@ export const STAGES = [
     id: 'melbourne-master',
     title: '2024 - Move to Melbourne for Master',
     start: 6750,
-    end: 8250,
+    end: 8000,
     skyTop: '#8fc8ff',
     skyBottom: '#dbeeff',
     ground: '#6f9f7a',
@@ -58,7 +58,7 @@ export const STAGES = [
 
 export const WORLD = {
   width: STAGES[STAGES.length - 1].end + 120,
-  height: 900,
+  height: 800,
   groundPadding: 180,
 }
 
@@ -91,9 +91,9 @@ export const HOSPITAL = {
 }
 
 export const INDONESIA_TERRACES = {
-  x: STAGES[2].start + 200,
+  x: STAGES[2].start + 100,
   width: 280,
-  height: 200,
+  height: 280,
   groundOffset: 70,
   peakLift: 50,
 }

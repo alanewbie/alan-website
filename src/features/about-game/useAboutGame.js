@@ -54,11 +54,11 @@ function getStoryFocusZone(state) {
   }
 
   if (stage.id === 'indonesia') {
-    const terraceCenter = INDONESIA_TERRACES.x + INDONESIA_TERRACES.width / 2
+    const terraceCenter = INDONESIA_TERRACES.x + INDONESIA_TERRACES.width / 2 + 15
     const terraceBandHalf = INDONESIA_TERRACES.width * 0.1
     if (Math.abs(playerCenterX - terraceCenter) <= terraceBandHalf) return 'terrace'
 
-    const schoolCenter = stage.start + 700
+    const schoolCenter = stage.start + 750
     const schoolBandHalf = 280 * 0.1
     if (Math.abs(playerCenterX - schoolCenter) <= schoolBandHalf) return 'school'
   }
@@ -78,7 +78,7 @@ function getStoryFocusZone(state) {
   }
 
   if (stage.id === 'melbourne-master') {
-    const monashStudyCenter = stage.start + 570
+    const monashStudyCenter = stage.start + 470
     const monashStudyBandHalf = 260 * 0.1
     if (Math.abs(playerCenterX - monashStudyCenter) <= monashStudyBandHalf) return 'monashStudy'
   }
@@ -449,7 +449,7 @@ export function useAboutGame(canvasRef) {
 
     const currentCenterX = state.player.x + state.player.w / 2
     const terraceLift = getTerraceLiftAtX(currentCenterX, state.currentStageIndex)
-    const groundTop = state.world.groundY - state.player.h - terraceLift
+    const groundTop = state.world.groundY - state.player.h - terraceLift - 30
     if (state.player.y >= groundTop) {
       state.player.y = groundTop
       state.player.vy = 0

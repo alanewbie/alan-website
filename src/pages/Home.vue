@@ -2,7 +2,7 @@
   <div class="min-h-screen">
     <!-- Hero Section (Full screen image) -->
     <section class="relative w-full">
-      <div class="relative w-full overflow-hidden min-h-[520px] h-[70vh] max-h-[720px]">
+      <div class="relative w-full overflow-hidden min-h-[32.5rem] h-[70vh] max-h-[45rem]">
         <div
           class="absolute inset-0 bg-fixed bg-no-repeat bg-top"
           :style="{ backgroundImage: `url(${heroUrl})`, backgroundSize: '100% auto' }"
@@ -155,11 +155,11 @@
                 >
               </button>
             </div>
-            <div class="max-h-[calc(85vh-52px)] overflow-auto p-4 flex items-center justify-center">
+            <div class="max-h-[calc(85vh-3.25rem)] overflow-auto p-4 flex items-center justify-center">
               <img
                 :src="lightbox.src"
                 :alt="lightbox.title"
-                class="w-auto max-w-full max-h-[calc(85vh-52px-32px)] object-contain"
+                class="w-auto max-w-full max-h-[calc(85vh-3.25rem-2rem)] object-contain"
                 draggable="false"
               />
             </div>
@@ -515,7 +515,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .reveal {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(0.9rem);
   transition:
     opacity 2000ms ease,
     transform 2000ms ease;
@@ -544,7 +544,7 @@ onBeforeUnmount(() => {
 
 .aboutme-intro {
   margin: -0.35rem auto 0.65rem;
-  max-width: 760px;
+  max-width: 47.5rem;
   color: rgba(255, 255, 255, 0.78);
   font-size: 1rem;
   line-height: 1.45;
@@ -565,7 +565,7 @@ onBeforeUnmount(() => {
 
 .aboutme-slide-desc {
   margin: 0 auto 0.42rem;
-  max-width: 720px;
+  max-width: 45rem;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.88rem;
   line-height: 1.35;
@@ -577,7 +577,7 @@ onBeforeUnmount(() => {
   position: relative;
   padding: 0.7rem 0.6rem;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 1rem;
   cursor: grab;
   touch-action: pan-y;
 }
@@ -592,7 +592,7 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 64px;
+  width: 4rem;
   z-index: 2;
   pointer-events: none;
 }
@@ -615,10 +615,10 @@ onBeforeUnmount(() => {
 }
 
 .aboutme-logo-item {
-  width: 170px;
-  height: 96px;
+  width: 10.625rem;
+  height: 6rem;
   border: 1px solid rgba(17, 24, 39, 0.15);
-  border-radius: 14px;
+  border-radius: 0.875rem;
   background: rgba(255, 255, 255, 0.98);
   display: flex;
   align-items: center;

@@ -47,7 +47,7 @@ const INDONESIA_SCHOOL = {
   xOffset: 700,
   width: 280,
   height: 200,
-  yOffset: -20,
+  yOffset: -50,
 }
 const TAIWAN_NTU = {
   xOffset: 330,
@@ -68,7 +68,7 @@ const TAIWAN_COMPANY = {
   yOffset: -5,
 }
 const MELBOURNE_STUDY = {
-  xOffset: 570,
+  xOffset: 470,
   width: 260,
 }
 
@@ -80,6 +80,13 @@ const ISO = {
   originX: 140,
   originYRatio: 0.8,
   laneDepth: 165,
+}
+
+function getSceneScale(camera) {
+  const widthScale = camera.w / 1600
+  const heightScale = camera.h / 980
+  const rawScale = Math.min(widthScale, heightScale) * 0.9
+  return Math.max(0.7, Math.min(0.9, rawScale))
 }
 
 function createFlippedFlagImage(image) {
@@ -213,11 +220,11 @@ function drawStoryImageWithOutline(ctx, image, x, y, w, h, alpha) {
 }
 
 function getStoryCardScale(camera) {
-  return Math.max(0.62, Math.min(1, camera.w / 1600))
+  return Math.max(0.52, Math.min(0.9, getSceneScale(camera)))
 }
 
 function storyFont(weight, size, scale) {
-  return `${weight} ${Math.max(12, Math.round(size * scale))}px system-ui`
+  return `${weight} ${Math.max(11, Math.round(size * scale))}px system-ui`
 }
 
 function drawStars(ctx, stage, camera) {
@@ -245,6 +252,54 @@ function drawStageSurfaces(ctx, camera, mode) {
     const d = projectPoint(stage.start, ISO.laneDepth, 0, camera)
 
     drawQuad(ctx, a, b, c, d, stage.ground, 'rgba(0,0,0,0.12)')
+
+    if (stage.scenery !== 'stars' && stage.id !== 'taiwan-born') {
+      const beachWidth = 55
+      const beachA = projectPoint(stage.start, 0, 0, camera)
+      const beachB = projectPoint(stage.start + beachWidth, 0, 0, camera)
+      const beachC = projectPoint(stage.start + beachWidth, ISO.laneDepth, 0, camera)
+      const beachD = projectPoint(stage.start, ISO.laneDepth, 0, camera)
+      drawQuad(ctx, beachA, beachB, beachC, beachD, '#d9c48b', 'rgba(255,255,255,0.16)')
+    }
+
+    if (stage.scenery !== 'stars') {
+      const roadCenterZ = 110
+      const roadHalfWidth = 22
+      const roadLiftY = 30
+      let roadStartX = stage.start
+      if (stage.id === 'taiwan-born') {
+        roadStartX = HOSPITAL.x + HOSPITAL.width / 2
+      } else if (stage.id === 'indonesia') {
+        roadStartX = INDONESIA_TERRACES.x + INDONESIA_TERRACES.width / 2
+      }
+
+      const roadStartA = projectPoint(roadStartX, roadCenterZ - roadHalfWidth, roadLiftY, camera)
+      const roadStartB = projectPoint(stage.end, roadCenterZ - roadHalfWidth, roadLiftY, camera)
+      const roadEndB = projectPoint(stage.end, roadCenterZ + roadHalfWidth, roadLiftY, camera)
+      const roadEndA = projectPoint(roadStartX, roadCenterZ + roadHalfWidth, roadLiftY, camera)
+
+      drawQuad(
+        ctx,
+        roadStartA,
+        roadStartB,
+        roadEndB,
+        roadEndA,
+        'rgba(81,89,99,0.94)',
+        'rgba(0,0,0,0.2)',
+      )
+
+      const laneMarkHalf = 2.2
+      const laneMarkLength = 52
+      const laneGap = 82
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'
+      for (let x = roadStartX + 36; x < stage.end - laneMarkLength; x += laneMarkLength + laneGap) {
+        const mA = projectPoint(x, roadCenterZ - laneMarkHalf, roadLiftY, camera)
+        const mB = projectPoint(x + laneMarkLength, roadCenterZ - laneMarkHalf, roadLiftY, camera)
+        const mC = projectPoint(x + laneMarkLength, roadCenterZ + laneMarkHalf, roadLiftY, camera)
+        const mD = projectPoint(x, roadCenterZ + laneMarkHalf, roadLiftY, camera)
+        drawQuad(ctx, mA, mB, mC, mD, 'rgba(255,255,255,0.72)')
+      }
+    }
 
     const frontDrop = 150
     drawQuad(
@@ -322,20 +377,23 @@ function drawOceans(ctx, camera, mode) {
 }
 
 function drawBillboard(ctx, image, camera, worldX, width, height, opts = {}) {
+  const scale = opts.scale ?? 1
   const worldZ = opts.worldZ ?? 108
   const worldY = opts.worldY ?? 0
   const yOffset = opts.yOffset ?? 0
 
   const p = projectPoint(worldX, worldZ, worldY, camera)
-  const x = p.x - width / 2
-  const y = p.y - height + yOffset
+  const drawW = width * scale
+  const drawH = height * scale
+  const x = p.x - drawW / 2
+  const y = p.y - drawH + yOffset * scale
 
   if (image?.complete && image.naturalWidth > 0) {
-    ctx.drawImage(image, x, y, width, height)
+    ctx.drawImage(image, x, y, drawW, drawH)
   }
 }
 
-function drawLandmarks(ctx, camera, world) {
+function drawLandmarks(ctx, camera, world, sceneScale) {
   if (isStageVisible('taiwan-born', 'play')) {
     drawBillboard(
       ctx,
@@ -345,7 +403,8 @@ function drawLandmarks(ctx, camera, world) {
       HOSPITAL.width,
       HOSPITAL.height,
       {
-        yOffset: 10,
+        yOffset: -35,
+        scale: sceneScale,
       },
     )
   }
@@ -359,7 +418,7 @@ function drawLandmarks(ctx, camera, world) {
       INDONESIA_TERRACES.x + INDONESIA_TERRACES.width / 2,
       INDONESIA_TERRACES.width,
       INDONESIA_TERRACES.height,
-      { yOffset: INDONESIA_TERRACES.groundOffset },
+      { yOffset: INDONESIA_TERRACES.groundOffset - 20, scale: sceneScale },
     )
     drawBillboard(
       ctx,
@@ -368,7 +427,7 @@ function drawLandmarks(ctx, camera, world) {
       indonesia.start + INDONESIA_SCHOOL.xOffset,
       INDONESIA_SCHOOL.width,
       INDONESIA_SCHOOL.height,
-      { yOffset: INDONESIA_SCHOOL.yOffset },
+      { yOffset: INDONESIA_SCHOOL.yOffset + 30, scale: sceneScale * 1.35 },
     )
   }
 
@@ -381,7 +440,7 @@ function drawLandmarks(ctx, camera, world) {
       taiwanReturn.start + TAIWAN_NTU.xOffset,
       TAIWAN_NTU.width,
       TAIWAN_NTU.height,
-      { yOffset: TAIWAN_NTU.yOffset },
+      { yOffset: TAIWAN_NTU.yOffset - 70, scale: sceneScale * 0.95 },
     )
     drawBillboard(
       ctx,
@@ -390,7 +449,7 @@ function drawLandmarks(ctx, camera, world) {
       taiwanReturn.start + TAIWAN_MILITARY.xOffset,
       TAIWAN_MILITARY.width,
       TAIWAN_MILITARY.height,
-      { yOffset: TAIWAN_MILITARY.yOffset },
+      { yOffset: TAIWAN_MILITARY.yOffset - 70, scale: sceneScale * 0.95 },
     )
     drawBillboard(
       ctx,
@@ -399,14 +458,20 @@ function drawLandmarks(ctx, camera, world) {
       taiwanReturn.start + TAIWAN_COMPANY.xOffset,
       TAIWAN_COMPANY.width,
       TAIWAN_COMPANY.height,
-      { yOffset: TAIWAN_COMPANY.yOffset },
+      { yOffset: TAIWAN_COMPANY.yOffset - 15, scale: sceneScale * 1.3 },
     )
   }
 
   const melbourne = STAGES.find((s) => s.id === 'melbourne-master')
   if (melbourne && isStageVisible('melbourne-master', 'play')) {
-    drawBillboard(ctx, monash2Image, camera, melbourne.start + 620, 320, 235, { yOffset: 52 })
-    drawBillboard(ctx, monashImage, camera, melbourne.start + 250, 330, 250, { yOffset: 55 })
+    drawBillboard(ctx, monash2Image, camera, melbourne.start + 390, 320, 235, {
+      yOffset: -45,
+      scale: sceneScale * 0.8,
+    })
+    drawBillboard(ctx, monashImage, camera, melbourne.start + 175, 330, 250, {
+      yOffset: -45,
+      scale: sceneScale * 0.8,
+    })
   }
 }
 
@@ -454,7 +519,7 @@ function drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel
   const cardW = 300 * s
   const cardH = 40 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 130 * s
+  const y = anchor.y - 130 * s - 50
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.55)
 
   ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
@@ -492,10 +557,10 @@ function getFlagConfig(stageId) {
   }
 }
 
-function drawWavingFlag(ctx, camera, poleWorldX, poleWorldZ, time, flagConfig) {
-  const poleHeight = 108
-  const flagWidth = flagConfig.width
-  const flagHeight = flagConfig.height
+function drawWavingFlag(ctx, camera, poleWorldX, poleWorldZ, time, flagConfig, sceneScale) {
+  const poleHeight = 108 * sceneScale
+  const flagWidth = flagConfig.width * sceneScale
+  const flagHeight = flagConfig.height * sceneScale
   const waveStrength = flagConfig.wave
   const flagImage = flagConfig.image
   const reverseSample = flagConfig.reverseSample
@@ -526,7 +591,7 @@ function drawWavingFlag(ctx, camera, poleWorldX, poleWorldZ, time, flagConfig) {
   }
 }
 
-function drawFlags(ctx, camera, mode, time) {
+function drawFlags(ctx, camera, mode, time, sceneScale) {
   if (mode !== 'play') return
   const flagEdgeOffset = 12
   const flagTopDepth = 8
@@ -536,11 +601,11 @@ function drawFlags(ctx, camera, mode, time) {
     if (!isStageVisible(stage.id, mode)) continue
     const poleWorldX = stage.start + flagEdgeOffset
     const flagConfig = getFlagConfig(stage.id)
-    drawWavingFlag(ctx, camera, poleWorldX, flagTopDepth, time + i * 0.6, flagConfig)
+    drawWavingFlag(ctx, camera, poleWorldX, flagTopDepth, time + i * 0.6, flagConfig, sceneScale)
   }
 }
 
-function drawAirports(ctx, camera, mode) {
+function drawAirports(ctx, camera, mode, sceneScale) {
   if (mode !== 'play') return
   const airportScale = 2
 
@@ -552,64 +617,65 @@ function drawAirports(ctx, camera, mode) {
       ctx,
       airportImage,
       camera,
-      worldX - 40,
+      worldX - 45,
       AIRPORT_ZONE * airportScale,
-      125 * airportScale,
-      { yOffset: 10 },
+      100 * airportScale,
+      { yOffset: -55, scale: sceneScale },
     )
   }
 }
 
-function drawPortal(ctx, camera, portal, world) {
+function drawPortal(ctx, camera, portal, world, sceneScale) {
   const lift = world.groundY - portal.y
   const p = projectPoint(portal.x, 98, lift, camera)
+  const radius = PORTAL.radius * sceneScale
 
   ctx.beginPath()
-  ctx.arc(p.x, p.y, PORTAL.radius + 26, 0, Math.PI * 2)
+  ctx.arc(p.x, p.y, radius + 26 * sceneScale, 0, Math.PI * 2)
   ctx.fillStyle = 'rgba(255,255,255,0.1)'
   ctx.fill()
 
   ctx.beginPath()
-  ctx.arc(p.x, p.y, PORTAL.radius, 0, Math.PI * 2)
-  ctx.lineWidth = 5
+  ctx.arc(p.x, p.y, radius, 0, Math.PI * 2)
+  ctx.lineWidth = 5 * sceneScale
   ctx.strokeStyle = 'rgba(255,255,255,0.95)'
   ctx.stroke()
 
   ctx.fillStyle = 'rgba(255,255,255,0.85)'
-  ctx.font = '14px system-ui'
-  ctx.fillText('Move into the circle to be born', p.x + 64, p.y + 6)
+  ctx.font = storyFont(500, 14, sceneScale)
+  ctx.fillText('Move into the circle to be born', p.x + 64 * sceneScale, p.y + 6 * sceneScale)
 }
 
-function drawPortalHintArrow(ctx, camera, portal, world, time) {
+function drawPortalHintArrow(ctx, camera, portal, world, time, sceneScale) {
   const lift = world.groundY - portal.y
   const p = projectPoint(portal.x, 98, lift, camera)
-  const bob = Math.sin(time * 4.2) * 6
+  const bob = Math.sin(time * 4.2) * 6 * sceneScale
   const tipX = p.x
-  const tipY = p.y - PORTAL.radius - 14 + bob
-  const baseY = tipY - 18
+  const tipY = p.y - PORTAL.radius * sceneScale - 14 * sceneScale + bob
+  const baseY = tipY - 18 * sceneScale
 
   ctx.fillStyle = '#ff2b2b'
   ctx.beginPath()
   ctx.moveTo(tipX, tipY)
-  ctx.lineTo(tipX - 12, baseY)
-  ctx.lineTo(tipX + 12, baseY)
+  ctx.lineTo(tipX - 12 * sceneScale, baseY)
+  ctx.lineTo(tipX + 12 * sceneScale, baseY)
   ctx.closePath()
   ctx.fill()
 }
 
-function drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel) {
+function drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel, sceneScale) {
   if (travel?.active) return
   if (currentStageIndex < 1 || currentStageIndex >= STAGES.length - 1) return
   const stage = STAGES[currentStageIndex]
   const airportWorldX = stage.end - AIRPORT_ZONE - 40
   const airportBase = projectPoint(airportWorldX, 108, 0, camera)
-  const bob = Math.sin(time * 4.4) * 6
+  const bob = Math.sin(time * 4.4) * 6 * sceneScale
   const tipX = airportBase.x
-  const tipY = airportBase.y - 276 + bob
-  const stemTopY = tipY - 22
+  const tipY = airportBase.y - 276 * sceneScale + bob
+  const stemTopY = tipY - 22 * sceneScale
 
   ctx.strokeStyle = '#ff2b2b'
-  ctx.lineWidth = 5
+  ctx.lineWidth = 5 * sceneScale
   ctx.lineCap = 'round'
   ctx.beginPath()
   ctx.moveTo(tipX, stemTopY)
@@ -619,14 +685,15 @@ function drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel) {
   ctx.fillStyle = '#ff2b2b'
   ctx.beginPath()
   ctx.moveTo(tipX, tipY)
-  ctx.lineTo(tipX - 13, tipY - 18)
-  ctx.lineTo(tipX + 13, tipY - 18)
+  ctx.lineTo(tipX - 13 * sceneScale, tipY - 18 * sceneScale)
+  ctx.lineTo(tipX + 13 * sceneScale, tipY - 18 * sceneScale)
   ctx.closePath()
   ctx.fill()
 }
 
 function drawCharacter(ctx, player, camera, sprite, label, characterKey, world) {
-  const scale = characterKey === 'spirit' ? 1 : 1.35
+  const sceneScale = getSceneScale(camera)
+  const scale = (characterKey === 'spirit' ? 1 : 1.35) * sceneScale
   const drawW = player.w * scale
   const drawH = player.h * scale
   const groundShift =
@@ -636,10 +703,18 @@ function drawCharacter(ctx, player, camera, sprite, label, characterKey, world) 
   const playerLift = world.groundY - player.h - player.y
   const base = projectPoint(playerCenterX, 110, playerLift, camera)
 
-  const shadow = projectPoint(playerCenterX, 120, 0, camera)
+  const shadow = projectPoint(playerCenterX, 110, 28, camera)
   ctx.fillStyle = 'rgba(0,0,0,0.2)'
   ctx.beginPath()
-  ctx.ellipse(shadow.x, shadow.y + 4, 22, 7, 0, 0, Math.PI * 2)
+  ctx.ellipse(
+    shadow.x,
+    shadow.y + 4 * sceneScale,
+    22 * sceneScale,
+    7 * sceneScale,
+    0,
+    0,
+    Math.PI * 2,
+  )
   ctx.fill()
 
   if (sprite?.complete && sprite.naturalWidth > 0) {
@@ -651,8 +726,8 @@ function drawCharacter(ctx, player, camera, sprite, label, characterKey, world) 
 
   if (label) {
     ctx.fillStyle = '#0f0f0f'
-    ctx.font = '700 18px system-ui'
-    ctx.fillText(label, base.x - 18, base.y - drawH - 10)
+    ctx.font = storyFont(700, 18, sceneScale)
+    ctx.fillText(label, base.x - 18 * sceneScale, base.y - drawH - 10 * sceneScale)
   }
 }
 
@@ -685,7 +760,7 @@ function drawTerraceStoryCard(ctx, camera, player, world, currentStageIndex, tra
   const cardW = 480 * s
   const cardH = 370 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 500 * s
+  const y = anchor.y - 500 * s - 50
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.15)
 
@@ -736,7 +811,7 @@ function drawSchoolStoryCard(ctx, camera, player, world, currentStageIndex, trav
   const cardW = 530 * s
   const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470 * s
+  const y = anchor.y - 470 * s - 50
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.35)
 
@@ -783,7 +858,7 @@ function drawNtuStoryCard(ctx, camera, player, world, currentStageIndex, travel,
   const cardW = 530 * s
   const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470 * s
+  const y = anchor.y - 470 * s - 50
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.55)
 
@@ -830,7 +905,7 @@ function drawMilitaryStoryCard(ctx, camera, player, world, currentStageIndex, tr
   const cardW = 520 * s
   const cardH = 360 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 440 * s
+  const y = anchor.y - 440 * s - 50
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.75)
 
@@ -883,7 +958,7 @@ function drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, tra
   const cardW = 520 * s
   const cardH = 390 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 470 * s
+  const y = anchor.y - 470 * s - 50
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 0.95)
 
@@ -899,7 +974,11 @@ function drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, tra
   ctx.fillText('Tech Career Chapter', x + cardW / 2, cardY + 50 * s)
   ctx.font = storyFont(600, 19, s)
   ctx.fillText('Worked in software and tech for nearly five years,', x + cardW / 2, cardY + 84 * s)
-  ctx.fillText('blending technical execution with B2B collaboration.', x + cardW / 2, cardY + 112 * s)
+  ctx.fillText(
+    'blending technical execution with B2B collaboration.',
+    x + cardW / 2,
+    cardY + 112 * s,
+  )
   ctx.textAlign = 'left'
 }
 
@@ -927,10 +1006,10 @@ function drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, trav
 
   const s = getStoryCardScale(camera)
   const anchor = projectPoint(playerCenterX, 110, 0, camera)
-  const cardW = 500 * s
+  const cardW = 530 * s
   const cardH = 330 * s
   const x = anchor.x - cardW / 2
-  const y = anchor.y - 430 * s
+  const y = anchor.y - 430 * s - 50
 
   const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.15)
 
@@ -1021,6 +1100,7 @@ export function renderScene(ctx, state) {
   } = state
   const stageIndex = Math.max(currentStageIndex, 0)
   const stage = STAGES[stageIndex]
+  const sceneScale = getSceneScale(camera)
 
   const gradient = ctx.createLinearGradient(0, 0, 0, camera.h)
   gradient.addColorStop(0, stage.skyTop)
@@ -1032,14 +1112,14 @@ export function renderScene(ctx, state) {
   drawOceans(ctx, camera, mode)
 
   if (mode === 'intro') {
-    drawPortal(ctx, camera, portal, world)
-    drawPortalHintArrow(ctx, camera, portal, world, time)
+    drawPortal(ctx, camera, portal, world, sceneScale)
+    drawPortalHintArrow(ctx, camera, portal, world, time, sceneScale)
   } else {
-    drawAirports(ctx, camera, mode)
-    drawLandmarks(ctx, camera, world)
+    drawAirports(ctx, camera, mode, sceneScale)
+    drawLandmarks(ctx, camera, world, sceneScale)
     drawNextJourneyHint(ctx, camera, mode, time)
-    drawFlags(ctx, camera, mode, time)
-    drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel)
+    drawFlags(ctx, camera, mode, time, sceneScale)
+    drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel, sceneScale)
   }
 
   const label = ''
@@ -1064,6 +1144,6 @@ export function renderScene(ctx, state) {
 
   const isSpaceStage = stage.id === 'space'
   ctx.fillStyle = isSpaceStage ? 'rgba(255,255,255,0.95)' : '#0f0f0f'
-  ctx.font = '700 22px system-ui'
-  ctx.fillText(stage.title, 24, 36)
+  ctx.font = storyFont(700, 22, sceneScale)
+  ctx.fillText(stage.title, 24 * sceneScale, 36 * sceneScale)
 }
