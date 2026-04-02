@@ -2,6 +2,8 @@ export const STAGES = [
   {
     id: 'space',
     title: 'Spirit Space',
+    splashYear: '',
+    splashCountry: '',
     start: 0,
     end: 1100,
     skyTop: '#04050a',
@@ -13,6 +15,8 @@ export const STAGES = [
   {
     id: 'taiwan-born',
     title: '1992 - Born in Taiwan',
+    splashYear: '1992',
+    splashCountry: 'Taiwan',
     start: 1200,
     end: 1900,
     skyTop: '#99dcff',
@@ -24,6 +28,8 @@ export const STAGES = [
   {
     id: 'indonesia',
     title: '1993 - Base in Indonesia',
+    splashYear: '1993',
+    splashCountry: 'Indonesia',
     start: 2550,
     end: 3950,
     skyTop: '#f5c989',
@@ -35,6 +41,8 @@ export const STAGES = [
   {
     id: 'taiwan-return',
     title: '2010 - Back to Taiwan',
+    splashYear: '2010',
+    splashCountry: 'Taiwan',
     start: 4550,
     end: 6250,
     skyTop: '#b8d8ff',
@@ -45,7 +53,9 @@ export const STAGES = [
   },
   {
     id: 'melbourne-master',
-    title: '2024 - Move to Melbourne for Master',
+    title: '2024 - Move to Australia for Master',
+    splashYear: '2024',
+    splashCountry: 'Australia',
     start: 6750,
     end: 8000,
     skyTop: '#8fc8ff',
@@ -82,6 +92,7 @@ export const PORTAL = {
 }
 
 export const AIRPORT_ZONE = 160
+export const MELBOURNE_ROAD_END_OFFSET = 290
 
 export const HOSPITAL = {
   x: STAGES[1].start,

@@ -1,4 +1,11 @@
-import { AIRPORT_ZONE, HOSPITAL, INDONESIA_TERRACES, PORTAL, STAGES } from './config'
+import {
+  AIRPORT_ZONE,
+  HOSPITAL,
+  INDONESIA_TERRACES,
+  MELBOURNE_ROAD_END_OFFSET,
+  PORTAL,
+  STAGES,
+} from './config'
 
 const airportImage = new Image()
 airportImage.src = new URL('../../assets/game/airport.png', import.meta.url).href
@@ -67,6 +74,7 @@ const TAIWAN_COMPANY = {
   height: 200,
   yOffset: -5,
 }
+const NEXT_JOURNEY_MARKER_OFFSET = 345
 const MELBOURNE_STUDY = {
   xOffset: 470,
   width: 260,
@@ -277,15 +285,18 @@ function drawStageSurfaces(ctx, camera, mode) {
       const roadHalfWidth = 22
       const roadLiftY = 30
       let roadStartX = stage.start
+      let roadEndX = stage.end
       if (stage.id === 'taiwan-born') {
         roadStartX = HOSPITAL.x + HOSPITAL.width / 2
       } else if (stage.id === 'indonesia') {
         roadStartX = INDONESIA_TERRACES.x + INDONESIA_TERRACES.width / 2
+      } else if (stage.id === 'melbourne-master') {
+        roadEndX = stage.end - MELBOURNE_ROAD_END_OFFSET
       }
 
       const roadStartA = projectPoint(roadStartX, roadCenterZ - roadHalfWidth, roadLiftY, camera)
-      const roadStartB = projectPoint(stage.end, roadCenterZ - roadHalfWidth, roadLiftY, camera)
-      const roadEndB = projectPoint(stage.end, roadCenterZ + roadHalfWidth, roadLiftY, camera)
+      const roadStartB = projectPoint(roadEndX, roadCenterZ - roadHalfWidth, roadLiftY, camera)
+      const roadEndB = projectPoint(roadEndX, roadCenterZ + roadHalfWidth, roadLiftY, camera)
       const roadEndA = projectPoint(roadStartX, roadCenterZ + roadHalfWidth, roadLiftY, camera)
 
       drawQuad(
@@ -302,7 +313,7 @@ function drawStageSurfaces(ctx, camera, mode) {
       const laneMarkLength = 52
       const laneGap = 82
       ctx.fillStyle = 'rgba(255,255,255,0.7)'
-      for (let x = roadStartX + 36; x < stage.end - laneMarkLength; x += laneMarkLength + laneGap) {
+      for (let x = roadStartX + 36; x < roadEndX - laneMarkLength; x += laneMarkLength + laneGap) {
         const mA = projectPoint(x, roadCenterZ - laneMarkHalf, roadLiftY, camera)
         const mB = projectPoint(x + laneMarkLength, roadCenterZ - laneMarkHalf, roadLiftY, camera)
         const mC = projectPoint(x + laneMarkLength, roadCenterZ + laneMarkHalf, roadLiftY, camera)
@@ -492,7 +503,7 @@ function drawNextJourneyHint(ctx, camera, mode, time) {
   if (!lastStage || !isStageVisible(lastStage.id, mode)) return
   const s = getStoryCardScale(camera)
 
-  const markerX = lastStage.end - 345
+  const markerX = lastStage.end - NEXT_JOURNEY_MARKER_OFFSET
   const bob = Math.sin(time * 3.3) * 9
   const markerLift = 180 * s + bob
 
@@ -508,7 +519,7 @@ function drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel
   if (!stage || stage.id !== 'melbourne-master') return
 
   const playerCenterX = player.x + player.w / 2
-  const markerX = stage.end - 345
+  const markerX = stage.end - NEXT_JOURNEY_MARKER_OFFSET
   const centerBandHalf = 100
   const fadeMargin = 190
   const dx = Math.abs(playerCenterX - markerX)
@@ -1138,6 +1149,52 @@ function drawHospitalStoryCard(
   ctx.textAlign = 'left'
 }
 
+function fitTextSize(ctx, text, maxWidth, maxHeight, weight = 900) {
+  let size = Math.floor(maxHeight)
+  while (size > 12) {
+    ctx.font = `${weight} ${size}px system-ui`
+    const width = ctx.measureText(text).width
+    if (width <= maxWidth) return size
+    size -= 2
+  }
+  return 12
+}
+
+function drawArrivalSplash(ctx, camera, arrivalSplash) {
+  if (!arrivalSplash?.active || !arrivalSplash.year || !arrivalSplash.country) return
+
+  const duration = Math.max(arrivalSplash.duration || 2, 0.01)
+  const progress = 1 - Math.max(0, arrivalSplash.timer) / duration
+  let alpha = 1
+  if (progress < 0.15) alpha = progress / 0.15
+  if (progress > 0.8) alpha = (1 - progress) / 0.2
+  alpha = Math.max(0, Math.min(1, alpha))
+  if (alpha <= 0.01) return
+
+  const yearText = String(arrivalSplash.year)
+  const countryText = String(arrivalSplash.country).toUpperCase()
+
+  const widthLimit = camera.w * 0.8
+  const halfHeight = camera.h * 0.32
+  const yearSize = fitTextSize(ctx, yearText, widthLimit, halfHeight, 900)
+  const countrySize = fitTextSize(ctx, countryText, widthLimit, halfHeight, 900)
+
+  ctx.save()
+  ctx.globalAlpha = alpha
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = 'rgba(255,255,255,0.98)'
+  ctx.shadowColor = 'rgba(0,0,0,0.35)'
+  ctx.shadowBlur = Math.max(8, camera.w * 0.015)
+
+  ctx.font = `900 ${yearSize}px system-ui`
+  ctx.fillText(yearText, camera.w * 0.5, camera.h * 0.35)
+
+  ctx.font = `900 ${countrySize}px system-ui`
+  ctx.fillText(countryText, camera.w * 0.5, camera.h * 0.67)
+  ctx.restore()
+}
+
 export function renderScene(ctx, state) {
   const {
     camera,
@@ -1151,6 +1208,7 @@ export function renderScene(ctx, state) {
     time,
     travel,
     birthDropActive,
+    arrivalSplash,
   } = state
   const stageIndex = Math.max(currentStageIndex, 0)
   const stage = STAGES[stageIndex]
@@ -1198,6 +1256,7 @@ export function renderScene(ctx, state) {
   drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel, time)
+  drawArrivalSplash(ctx, camera, arrivalSplash)
 
   const isSpaceStage = stage.id === 'space'
   ctx.fillStyle = isSpaceStage ? 'rgba(255,255,255,0.95)' : '#0f0f0f'

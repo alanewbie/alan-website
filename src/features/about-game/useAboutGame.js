@@ -3,6 +3,7 @@ import {
   AIRPORT_ZONE,
   HOSPITAL,
   INDONESIA_TERRACES,
+  MELBOURNE_ROAD_END_OFFSET,
   PHYSICS,
   PLAYER,
   PORTAL,
@@ -143,6 +144,13 @@ export function useAboutGame(canvasRef) {
       planeX: 0,
       planeY: 0,
     },
+    arrivalSplash: {
+      active: false,
+      timer: 0,
+      duration: 3,
+      year: '',
+      country: '',
+    },
     storyFocusKey: '',
     autoJumpQueue: 0,
     autoJumpTimer: 0,
@@ -189,6 +197,34 @@ export function useAboutGame(canvasRef) {
     state.hintTimer = Math.max(0, state.hintTimer - dt)
     if (state.hintTimer === 0) {
       state.hintText = ''
+    }
+  }
+
+  function showArrivalSplash(stageIndex) {
+    const stage = STAGES[stageIndex]
+    const year = stage?.splashYear || ''
+    const country = stage?.splashCountry || ''
+    if (!year || !country) {
+      state.arrivalSplash.active = false
+      state.arrivalSplash.timer = 0
+      state.arrivalSplash.year = ''
+      state.arrivalSplash.country = ''
+      return
+    }
+
+    state.arrivalSplash.active = true
+    state.arrivalSplash.timer = state.arrivalSplash.duration
+    state.arrivalSplash.year = year
+    state.arrivalSplash.country = country
+  }
+
+  function tickArrivalSplash(dt) {
+    if (!state.arrivalSplash.active) return
+    state.arrivalSplash.timer = Math.max(0, state.arrivalSplash.timer - dt)
+    if (state.arrivalSplash.timer === 0) {
+      state.arrivalSplash.active = false
+      state.arrivalSplash.year = ''
+      state.arrivalSplash.country = ''
     }
   }
 
@@ -246,6 +282,10 @@ export function useAboutGame(canvasRef) {
     state.birthDropActive = false
     state.travel.active = false
     state.travel.timer = 0
+    state.arrivalSplash.active = false
+    state.arrivalSplash.timer = 0
+    state.arrivalSplash.year = ''
+    state.arrivalSplash.country = ''
     state.player.x = 120
     state.player.y = state.world.groundY - state.player.h - 220
     state.player.vx = 0
@@ -290,6 +330,7 @@ export function useAboutGame(canvasRef) {
     state.seenAutoJumpZones.military = false
     state.seenAutoJumpZones.company = false
     state.seenAutoJumpZones.monashStudy = false
+    showArrivalSplash(state.currentStageIndex)
     updateCharacter()
     syncHud()
   }
@@ -335,6 +376,7 @@ export function useAboutGame(canvasRef) {
     state.autoJumpTimer = 0
     state.autoJumpLockTimer = 0
     state.autoJumpLockX = 0
+    showArrivalSplash(state.currentStageIndex)
     updateCharacter()
     syncHud()
   }
@@ -441,7 +483,10 @@ export function useAboutGame(canvasRef) {
     }
 
     const stage = STAGES[state.currentStageIndex]
-    const stageMaxX = stage.end - state.player.w
+    let stageMaxX = stage.end - state.player.w
+    if (stage.id === 'melbourne-master') {
+      stageMaxX = stage.end - MELBOURNE_ROAD_END_OFFSET - state.player.w
+    }
 
     if (state.player.x <= state.lockedMinX) {
       state.player.x = state.lockedMinX
@@ -507,7 +552,8 @@ export function useAboutGame(canvasRef) {
     const follow = state.mode === 'intro' ? 8 : 11
     const xAnchor = state.isPhoneViewport ? 0.1 : 0.5
     const targetX = state.player.x + state.player.w / 2 - state.camera.w * xAnchor
-    const targetY = state.mode === 'intro' ? state.player.y + state.player.h / 2 - state.camera.h / 2 : 0
+    const targetY =
+      state.mode === 'intro' ? state.player.y + state.player.h / 2 - state.camera.h / 2 : 0
 
     state.camera.x += (targetX - state.camera.x) * Math.min(1, follow * dt)
     state.camera.x = clamp(state.camera.x, 0, Math.max(0, state.world.width - state.camera.w))
@@ -530,6 +576,7 @@ export function useAboutGame(canvasRef) {
     state.time += dt
 
     tickHint(dt)
+    tickArrivalSplash(dt)
 
     if (state.mode === 'intro') updateIntro(dt)
     else updatePlay(dt)

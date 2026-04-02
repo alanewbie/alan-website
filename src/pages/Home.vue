@@ -392,7 +392,13 @@ const setRevealEl = (el) => {
 let observer = null
 
 function isSmartphoneViewport() {
-  return window.matchMedia('(max-width: 768px)').matches
+  const ua = navigator.userAgent || ''
+  const isIPhoneOrIPod = /\b(iPhone|iPod)\b/i.test(ua)
+  const isAndroidPhone = /\bAndroid\b/i.test(ua) && /\bMobile\b/i.test(ua)
+  const isPhoneByUA = isIPhoneOrIPod || isAndroidPhone
+
+  const isPortrait = window.matchMedia('(orientation: portrait)').matches
+  return isPhoneByUA && isPortrait
 }
 
 function updateHeroForViewport() {
