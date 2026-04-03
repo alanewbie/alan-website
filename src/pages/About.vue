@@ -15,10 +15,7 @@
       </div>
     </div>
 
-    <div
-      v-if="showVirtualControls && !mustRotatePhone"
-      class="absolute left-4 bottom-5 z-30"
-    >
+    <div v-if="showVirtualControls && !mustRotatePhone" class="absolute left-4 bottom-5 z-30">
       <div
         class="joystick"
         @pointerdown.prevent="onJoystickPointerDown"
@@ -28,6 +25,21 @@
       >
         <div class="joystick__ring"></div>
         <div class="joystick__thumb" :style="joystickThumbStyle"></div>
+      </div>
+    </div>
+
+    <div
+      v-if="showKeyboardHint && !showVirtualControls && !mustRotatePhone"
+      class="keyboard-hint absolute left-1/2 bottom-8 z-20 -translate-x-1/2"
+    >
+      <p class="keyboard-hint__title">Keyboard Controls</p>
+      <div class="keyboard-hint__keys" aria-label="Use arrow keys to move">
+        <span class="keyboard-hint__spacer"></span>
+        <span class="keyboard-hint__key">↑</span>
+        <span class="keyboard-hint__spacer"></span>
+        <span class="keyboard-hint__key">←</span>
+        <span class="keyboard-hint__key">↓</span>
+        <span class="keyboard-hint__key">→</span>
       </div>
     </div>
 
@@ -52,6 +64,7 @@ const mustRotatePhone = ref(false)
 const joystickX = ref(0)
 const joystickY = ref(0)
 const activePointerId = ref(null)
+const showKeyboardHint = ref(false)
 
 const { restartGame, setControlKey } = useAboutGame(canvasRef)
 
@@ -160,12 +173,13 @@ function onJoystickPointerEnd(e) {
 
 onMounted(() => {
   showVirtualControls.value = shouldShowVirtualControls()
+  showKeyboardHint.value = !showVirtualControls.value
   updateMobileOrientationState()
   window.addEventListener('resize', updateMobileOrientationState)
   window.addEventListener('orientationchange', updateMobileOrientationState)
   Swal.fire({
     title: 'Welcome to the Journey',
-    html: 'Use <b>↑ ← →</b> on keyboard or the joystick on mobile.<br><br>Spend 1 minute to explore the highlights of my life.',
+    html: 'Press start to explore my life like a game.',
     icon: 'info',
     confirmButtonText: 'Start',
     confirmButtonColor: '#1f477a',
@@ -181,6 +195,58 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.keyboard-hint {
+  min-width: 13rem;
+  padding: 0.72rem 0.9rem 0.8rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(4, 10, 26, 0.66);
+  backdrop-filter: blur(8px);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+.keyboard-hint__title {
+  margin: 0 0 0.45rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(228, 241, 255, 0.92);
+  text-align: center;
+}
+
+.keyboard-hint__keys {
+  display: grid;
+  grid-template-columns: repeat(3, 2.25rem);
+  grid-template-rows: repeat(2, 2.25rem);
+  gap: 0.28rem;
+  justify-content: center;
+}
+
+.keyboard-hint__spacer {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.keyboard-hint__key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.48rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: rgba(249, 252, 255, 0.97);
+  border: 1px solid rgba(197, 228, 255, 0.4);
+  background:
+    linear-gradient(180deg, rgba(170, 210, 255, 0.28) 0%, rgba(31, 51, 76, 0.22) 55%),
+    rgba(8, 16, 33, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 6px 10px rgba(0, 0, 0, 0.28);
+}
+
 .joystick {
   position: relative;
   width: 7.2rem;

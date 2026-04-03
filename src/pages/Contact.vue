@@ -12,8 +12,8 @@
           />
           <h1 class="mt-5 text-3xl font-bold">Get In Touch</h1>
           <p class="mt-2 text-sm text-white/70">
-            Open to Software Engineering, Consulting, and Presales roles, spanning both technical
-            development and client-facing functions.
+            Open to Software Engineer, Solution Engineer, Consulting, and Presales roles, spanning
+            both technical development and client-facing functions.
           </p>
         </div>
 
@@ -34,7 +34,7 @@
             <a
               class="rounded-2xl border border-white/15 bg-white/5 p-4 transition hover:border-white/35 hover:bg-white/10"
             >
-              <p class="text-xs uppercase tracking-wide text-white/55">Phone</p>
+              <p class="text-xs uppercase tracking-wide text-white/55">Phone (AU)</p>
               <p class="mt-1 text-base font-semibold">0451-468-437</p>
             </a>
           </div>
@@ -50,12 +50,10 @@
               linkedin.com/in/alan-tseng-9a198a1b3
             </p>
           </a>
-
           <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p class="text-xs uppercase tracking-wide text-white/55">More Info</p>
             <p class="mt-2 text-sm text-white/75">Location: Melbourne, Australia</p>
             <p class="mt-1 text-sm text-white/75">Preferred employment type: Full-time</p>
-            <p class="mt-1 text-sm text-white/75">Portfolio PDF: coming soon</p>
           </div>
         </div>
       </div>
