@@ -39,17 +39,29 @@
             </a>
           </div>
 
-          <a
-            href="https://www.linkedin.com/in/alan-tseng-9a198a1b3/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="block rounded-2xl border border-white/15 bg-white/5 p-4 transition hover:border-white/35 hover:bg-white/10"
-          >
-            <p class="text-xs uppercase tracking-wide text-white/55">LinkedIn</p>
-            <p class="mt-1 break-all text-base font-semibold">
-              linkedin.com/in/alan-tseng-9a198a1b3
-            </p>
-          </a>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <a
+              href="https://www.linkedin.com/in/alan-tseng-9a198a1b3/"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block rounded-2xl border border-white/15 bg-white/5 p-4 transition hover:border-white/35 hover:bg-white/10"
+            >
+              <p class="text-xs uppercase tracking-wide text-white/55">LinkedIn</p>
+              <p class="mt-1 break-all text-base font-semibold">
+                linkedin.com/in/alan-tseng-9a198a1b3
+              </p>
+            </a>
+
+            <a
+              href="https://github.com/alanewbie"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block rounded-2xl border border-white/15 bg-white/5 p-4 transition hover:border-white/35 hover:bg-white/10"
+            >
+              <p class="text-xs uppercase tracking-wide text-white/55">GitHub</p>
+              <p class="mt-1 break-all text-base font-semibold">github.com/alanewbie</p>
+            </a>
+          </div>
           <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p class="text-xs uppercase tracking-wide text-white/55">More Info</p>
             <p class="mt-2 text-sm text-white/75">Location: Melbourne, Australia</p>

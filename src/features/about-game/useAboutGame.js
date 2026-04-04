@@ -272,7 +272,7 @@ export function useAboutGame(canvasRef) {
       (window.matchMedia('(pointer: coarse)').matches ||
         window.matchMedia('(max-width: 1024px)').matches)
     state.world.groundY = state.world.height - WORLD.groundPadding
-    state.portal.x = STAGES[0].end
+    state.portal.x = STAGES[0].start + 640
     state.portal.y = state.world.groundY - 200
   }
 

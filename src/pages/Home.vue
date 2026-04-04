@@ -1,24 +1,32 @@
 <template>
   <div class="min-h-screen">
-    <!-- Hero Section (Full screen image) -->
-    <section class="relative w-full">
-      <div class="relative w-full overflow-hidden min-h-[32.5rem] h-[70vh] max-h-[45rem]">
+    <!-- Hero Section (Interactive robot) -->
+    <section class="relative w-full min-h-[26rem] h-[58vh] max-h-[40rem]">
+      <div class="fixed left-0 right-0 top-16 z-0">
+        <div class="relative w-full overflow-hidden min-h-[26rem] h-[58vh] max-h-[40rem] bg-black">
+        <div class="absolute inset-0 bg-gradient-to-r from-black via-black/95 to-black/80"></div>
         <div
-          class="absolute inset-0 bg-fixed bg-no-repeat bg-top"
-          :style="{ backgroundImage: `url(${heroUrl})`, backgroundSize: '100% auto' }"
-        ></div>
-        <div class="absolute inset-0 bg-black/30"></div>
-        <div class="relative z-10 flex items-start justify-center text-center text-white pt-16">
-          <div>
+          class="relative z-10 mx-auto grid h-full w-full max-w-7xl items-center gap-6 px-6 pt-8 md:grid-cols-2"
+        >
+          <div class="text-center text-white md:text-left">
             <h1 class="text-2xl sm:text-3xl font-bold mb-1">Hello, this is</h1>
             <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-3">Alan Tseng</h1>
             <p class="text-xl sm:text-2xl md:text-3xl">
               AI / SaaS {{ typedText }}<span class="cursor">|</span>
             </p>
           </div>
+          <div class="relative self-end h-[20rem] sm:h-[24rem] md:h-full">
+            <canvas
+              ref="heroSplineCanvasRef"
+              class="h-full w-full bg-black/70"
+              aria-label="Interactive robot scene"
+            ></canvas>
+          </div>
+        </div>
         </div>
       </div>
     </section>
+    <div class="relative z-20">
     <!-- Personal Information -->
     <section class="aboutme-section-bg pt-20 pb-20 border-t text-white">
       <div class="max-w-7xl mx-auto px-6 text-center">
@@ -173,15 +181,17 @@
     <footer class="border-t py-8 text-center text-gray-500 text-sm">
       © {{ new Date().getFullYear() }} Alan Tseng. All rights reserved.
     </footer>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { reactive, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { Application } from '@splinetool/runtime'
 
-const desktopHeroUrl = new URL('../assets/hero.png', import.meta.url).href
-const smartphoneHeroUrl = new URL('../assets/smartphonehero.png', import.meta.url).href
-const heroUrl = ref(desktopHeroUrl)
+const heroSplineCanvasRef = ref(null)
+const heroSplineSceneUrl = 'https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode'
+let heroSplineApp = null
 const roles = ['Technical Presales', 'Software Developer', 'Business Development']
 const aboutLogoModules = import.meta.glob('../assets/aboutme/**/*.{png,jpg,jpeg,webp,svg}', {
   eager: true,
@@ -391,18 +401,12 @@ const setRevealEl = (el) => {
 
 let observer = null
 
-function isSmartphoneViewport() {
-  const ua = navigator.userAgent || ''
-  const isIPhoneOrIPod = /\b(iPhone|iPod)\b/i.test(ua)
-  const isAndroidPhone = /\bAndroid\b/i.test(ua) && /\bMobile\b/i.test(ua)
-  const isPhoneByUA = isIPhoneOrIPod || isAndroidPhone
+async function initHeroSpline() {
+  const canvas = heroSplineCanvasRef.value
+  if (!canvas) return
 
-  const isPortrait = window.matchMedia('(orientation: portrait)').matches
-  return isPhoneByUA && isPortrait
-}
-
-function updateHeroForViewport() {
-  heroUrl.value = isSmartphoneViewport() ? smartphoneHeroUrl : desktopHeroUrl
+  heroSplineApp = new Application(canvas)
+  await heroSplineApp.load(heroSplineSceneUrl)
 }
 
 // highlights
@@ -491,7 +495,7 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
-  updateHeroForViewport()
+  await initHeroSpline()
   typeEffect()
   await nextTick()
   aboutSlides.forEach((slide) => ensureAboutSlideState(slide.id))
@@ -517,7 +521,6 @@ onMounted(async () => {
   revealEls.forEach((el) => observer.observe(el))
 
   window.addEventListener('keydown', onKeydown)
-  window.addEventListener('resize', updateHeroForViewport)
 })
 
 onBeforeUnmount(() => {
@@ -526,10 +529,10 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointermove', onAboutMarqueePointerMove)
   window.removeEventListener('pointerup', onAboutMarqueePointerUp)
   window.removeEventListener('pointercancel', onAboutMarqueePointerUp)
-  window.removeEventListener('resize', updateHeroForViewport)
   observer?.disconnect()
   if (typingTimer) window.clearTimeout(typingTimer)
   if (marqueeRaf) window.cancelAnimationFrame(marqueeRaf)
+  if (heroSplineApp && typeof heroSplineApp.dispose === 'function') heroSplineApp.dispose()
 })
 </script>
 

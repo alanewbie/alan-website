@@ -251,7 +251,7 @@ const starterProjects = [
     overviewPlaceholder:
       "Backend system for Taipei 101's 2022 Christmas campaign, enabling users to collect points and redeem rewards via LINE. Designed to handle high concurrency and real-time validation, supporting large-scale user engagement and business tracking.",
     rolePlaceholder:
-      'Developed backend services using Java (Spring Boot) and MySQL, handling user validation, QR code redemption, and inventory tracking. Designed scalable APIs and data models (including Enum-based states) to ensure consistency under high concurrency.',
+      'Developed backend services using Java and MySQL, handling user validation, QR code redemption, and inventory tracking. Designed scalable APIs and data models (including Enum-based states) to ensure consistency under high concurrency.',
     outcomePlaceholder:
       'Successfully supported peak traffic of ~30,000 concurrent users with stable performance. Enabled real-time tracking of user activity, inventory, and revenue, contributing to a high-engagement campaign with over 1M+ participants and measurable business impact.',
     techSections: [

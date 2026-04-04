@@ -16,6 +16,9 @@
     </div>
 
     <div v-if="showVirtualControls && !mustRotatePhone" class="absolute left-4 bottom-5 z-30">
+      <div v-if="showMobileControlHint" class="mobile-control-hint" aria-live="polite">
+        Use the controller to play
+      </div>
       <div
         class="joystick"
         @pointerdown.prevent="onJoystickPointerDown"
@@ -65,6 +68,7 @@ const joystickX = ref(0)
 const joystickY = ref(0)
 const activePointerId = ref(null)
 const showKeyboardHint = ref(false)
+const showMobileControlHint = ref(false)
 
 const { restartGame, setControlKey } = useAboutGame(canvasRef)
 
@@ -155,6 +159,7 @@ function resetJoystick() {
 
 function onJoystickPointerDown(e) {
   if (mustRotatePhone.value) return
+  showMobileControlHint.value = false
   activePointerId.value = e.pointerId
   e.currentTarget?.setPointerCapture?.(e.pointerId)
   setJoystickFromPointer(e)
@@ -174,6 +179,7 @@ function onJoystickPointerEnd(e) {
 onMounted(() => {
   showVirtualControls.value = shouldShowVirtualControls()
   showKeyboardHint.value = !showVirtualControls.value
+  showMobileControlHint.value = showVirtualControls.value
   updateMobileOrientationState()
   window.addEventListener('resize', updateMobileOrientationState)
   window.addEventListener('orientationchange', updateMobileOrientationState)
@@ -245,6 +251,37 @@ onBeforeUnmount(() => {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     0 6px 10px rgba(0, 0, 0, 0.28);
+}
+
+.mobile-control-hint {
+  position: absolute;
+  left: 0.1rem;
+  bottom: 8rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.72rem;
+  border: 1px solid rgba(167, 234, 255, 0.45);
+  background: rgba(8, 20, 38, 0.86);
+  color: rgba(241, 250, 255, 0.96);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+}
+
+.mobile-control-hint::after {
+  content: '';
+  position: absolute;
+  left: 1.15rem;
+  top: calc(100% - 1px);
+  width: 0;
+  height: 0;
+  border-left: 0.48rem solid transparent;
+  border-right: 0.48rem solid transparent;
+  border-top: 0.6rem solid rgba(8, 20, 38, 0.86);
 }
 
 .joystick {
