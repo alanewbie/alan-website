@@ -183,9 +183,12 @@ onMounted(() => {
   updateMobileOrientationState()
   window.addEventListener('resize', updateMobileOrientationState)
   window.addEventListener('orientationchange', updateMobileOrientationState)
+  const controlHint = showVirtualControls.value
+    ? 'Use Joystick to control the character🕹️'
+    : 'Use keyboard to control the character⌨️'
   Swal.fire({
     title: 'Welcome to the Journey',
-    html: 'Press start to explore my life like a game.',
+    html: controlHint,
     icon: 'info',
     confirmButtonText: 'Start',
     confirmButtonColor: '#1f477a',

@@ -44,14 +44,6 @@
             <p class="text-xs uppercase tracking-[0.14em] text-slate-400">Overview</p>
             <p class="mt-2 text-sm text-slate-200">{{ project.overviewPlaceholder }}</p>
           </div>
-          <div class="rounded-xl border border-white/10 bg-slate-900/40 p-4">
-            <p class="text-xs uppercase tracking-[0.14em] text-slate-400">My Role</p>
-            <p class="mt-2 text-sm text-slate-200">{{ project.rolePlaceholder }}</p>
-          </div>
-          <div class="rounded-xl border border-white/10 bg-slate-900/40 p-4">
-            <p class="text-xs uppercase tracking-[0.14em] text-slate-400">Outcome</p>
-            <p class="mt-2 text-sm text-slate-200">{{ project.outcomePlaceholder }}</p>
-          </div>
         </div>
 
         <div class="mt-6">
@@ -219,10 +211,6 @@ const starterProjects = [
     shortIntro: 'Core research project from Monash master degree.',
     overviewPlaceholder:
       'This research develops a benchmark for evaluating LLM and embedding model combinations in Australian contract law, systematically comparing RAG and non-RAG systems to assess legal reasoning, retrieval accuracy, and hallucination.',
-    rolePlaceholder:
-      'Designed and implemented a legal AI benchmarking pipeline, including dataset construction, semantic chunking, and RAG systems. Evaluated LLM and embedding combinations using automated metrics and LLM-as-a-Judge with manual validation.',
-    outcomePlaceholder:
-      'Conducted 1,800 evaluations showing RAG significantly outperforms LLM-only systems. Domain-specific embeddings achieved highest accuracy (~0.84), improving retrieval and reducing hallucination. Delivered a reproducible benchmark for evaluating legal AI reliability in Australian contract law.',
     methodology: [
       'Benchmark Design',
       'Semantic Chunking',
@@ -250,10 +238,6 @@ const starterProjects = [
     shortIntro: 'Backend system focusing on Java, SQL, and LINE API',
     overviewPlaceholder:
       "Backend system for Taipei 101's 2022 Christmas campaign, enabling users to collect points and redeem rewards via LINE. Designed to handle high concurrency and real-time validation, supporting large-scale user engagement and business tracking.",
-    rolePlaceholder:
-      'Developed backend services using Java and MySQL, handling user validation, QR code redemption, and inventory tracking. Designed scalable APIs and data models (including Enum-based states) to ensure consistency under high concurrency.',
-    outcomePlaceholder:
-      'Successfully supported peak traffic of ~30,000 concurrent users with stable performance. Enabled real-time tracking of user activity, inventory, and revenue, contributing to a high-engagement campaign with over 1M+ participants and measurable business impact.',
     techSections: [
       {
         title: 'Backend & Platform',
