@@ -119,7 +119,7 @@
           </div>
         </div>
 
-        <div v-if="project.id === 'thesis'" class="mt-6">
+        <div v-if="project.id === 'thesis'" class="mt-6 flex w-full items-center justify-between gap-3">
           <a
             :href="project.thesisReaderUrl"
             target="_blank"
@@ -127,6 +127,14 @@
             class="inline-flex items-center rounded-lg border border-cyan-200/45 bg-cyan-200/15 px-4 py-2 text-sm font-semibold text-cyan-50 hover:bg-cyan-200/25"
           >
             Click here to read the Thesis
+          </a>
+          <a
+            href="https://github.com/alanewbie/Australian-Legal-LLM-Benchmark"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center rounded-lg border border-cyan-200/45 bg-cyan-200/15 px-4 py-2 text-sm font-semibold text-cyan-50 hover:bg-cyan-200/25"
+          >
+            Click here to check the GIT repo
           </a>
         </div>
 

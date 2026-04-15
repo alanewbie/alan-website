@@ -53,11 +53,18 @@
     >
       Restart
     </button>
+
+    <div
+      v-if="currentEarthImage && !mustRotatePhone"
+      class="earth-panel absolute right-4 bottom-6 z-20"
+    >
+      <img :src="currentEarthImage" :alt="`${currentEarthLabel} earth view`" class="earth-panel__image" />
+    </div>
   </section>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Swal from 'sweetalert2'
 import { useAboutGame } from '../features/about-game/useAboutGame'
 
@@ -70,13 +77,25 @@ const activePointerId = ref(null)
 const showKeyboardHint = ref(false)
 const showMobileControlHint = ref(false)
 
-const { restartGame, setControlKey } = useAboutGame(canvasRef)
+const earthTaiwanUrl = new URL('../assets/game/Earth_Taiwan.png', import.meta.url).href
+const earthIndoUrl = new URL('../assets/game/Earth_Indo.png', import.meta.url).href
+const earthAusUrl = new URL('../assets/game/Earth_Aus.png', import.meta.url).href
+
+const { restartGame, setControlKey, stageId } = useAboutGame(canvasRef)
 
 const controlKeys = ['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight']
 const joystickRadius = 42
 const joystickDeadZone = 14
 const activeJoystickKeys = new Set()
 const joystickThumbStyle = ref({ transform: 'translate(0px, 0px)' })
+const earthByStageId = {
+  'taiwan-born': { image: earthTaiwanUrl, label: 'Taiwan' },
+  'taiwan-return': { image: earthTaiwanUrl, label: 'Taiwan' },
+  indonesia: { image: earthIndoUrl, label: 'Indonesia' },
+  'melbourne-master': { image: earthAusUrl, label: 'Australia' },
+}
+const currentEarthImage = computed(() => earthByStageId[stageId.value]?.image ?? '')
+const currentEarthLabel = computed(() => earthByStageId[stageId.value]?.label ?? '')
 
 function shouldShowVirtualControls() {
   const coarsePointer = window.matchMedia('(pointer: coarse)').matches
@@ -254,6 +273,17 @@ onBeforeUnmount(() => {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     0 6px 10px rgba(0, 0, 0, 0.28);
+}
+
+.earth-panel {
+  width: 16rem;
+}
+
+.earth-panel__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
 }
 
 .mobile-control-hint {

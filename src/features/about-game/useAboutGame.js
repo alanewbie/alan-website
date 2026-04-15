@@ -89,6 +89,7 @@ function getStoryFocusZone(state) {
 
 export function useAboutGame(canvasRef) {
   const stageLabel = ref('Spirit Space')
+  const stageId = ref('space')
   const helperLabel = ref('Use ↑↓←→ to control')
   const modeLabel = ref('Intro')
 
@@ -147,7 +148,7 @@ export function useAboutGame(canvasRef) {
     arrivalSplash: {
       active: false,
       timer: 0,
-      duration: 3,
+      duration: 2,
       year: '',
       country: '',
     },
@@ -230,6 +231,7 @@ export function useAboutGame(canvasRef) {
 
   function syncHud() {
     stageLabel.value = STAGES[state.currentStageIndex].title
+    stageId.value = STAGES[state.currentStageIndex].id
     modeLabel.value = state.mode === 'intro' ? 'Intro' : 'Play'
 
     if (state.mode === 'intro') {
@@ -508,11 +510,14 @@ export function useAboutGame(canvasRef) {
       state.player.onGround = false
     }
 
-    const inAirportZone = state.player.x >= stage.end - AIRPORT_ZONE - 40
+    const airportTriggerXPadding = 200
+    const airportTriggerAirHeight = 240
+    const inAirportZone = state.player.x >= stage.end - AIRPORT_ZONE - airportTriggerXPadding
+    const inAirportVerticalRange = state.player.y >= groundTop - airportTriggerAirHeight
     if (
       inAirportZone &&
+      inAirportVerticalRange &&
       state.currentStageIndex < STAGES.length - 1 &&
-      state.player.onGround &&
       right
     ) {
       const nextStageIndex = findNextPlayableStage(state.currentStageIndex)
@@ -664,6 +669,7 @@ export function useAboutGame(canvasRef) {
 
   return {
     stageLabel,
+    stageId,
     helperLabel,
     modeLabel,
     restartGame,
