@@ -4,183 +4,183 @@
     <section class="relative w-full min-h-[26rem] h-[58vh] max-h-[40rem]">
       <div class="fixed left-0 right-0 top-16 z-0">
         <div class="relative w-full overflow-hidden min-h-[26rem] h-[58vh] max-h-[40rem] bg-black">
-        <div class="absolute inset-0 bg-gradient-to-r from-black via-black/95 to-black/80"></div>
-        <div
-          class="relative z-10 mx-auto grid h-full w-full max-w-7xl items-center gap-6 px-6 pt-8 md:grid-cols-2"
-        >
-          <div class="text-center text-white md:text-left">
-            <h1 class="text-2xl sm:text-3xl font-bold mb-1">Hello, this is</h1>
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-3">Alan Tseng</h1>
-            <p class="text-xl sm:text-2xl md:text-3xl">
-              AI / SaaS {{ typedText }}<span class="cursor">|</span>
-            </p>
+          <div class="absolute inset-0 bg-gradient-to-r from-black via-black/95 to-black/80"></div>
+          <div
+            class="relative z-10 mx-auto grid h-full w-full max-w-7xl items-center gap-6 px-6 pt-8 md:grid-cols-2"
+          >
+            <div class="text-center text-white md:text-left">
+              <h1 class="text-2xl sm:text-3xl font-bold mb-1">Hello, this is</h1>
+              <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold mb-3">Alan Tseng</h1>
+              <p class="text-xl sm:text-2xl md:text-3xl">
+                AI / SaaS {{ typedText }}<span class="cursor">|</span>
+              </p>
+            </div>
+            <div class="relative self-end h-[20rem] sm:h-[24rem] md:h-full">
+              <canvas
+                ref="heroSplineCanvasRef"
+                class="h-full w-full bg-black/70"
+                aria-label="Interactive robot scene"
+              ></canvas>
+            </div>
           </div>
-          <div class="relative self-end h-[20rem] sm:h-[24rem] md:h-full">
-            <canvas
-              ref="heroSplineCanvasRef"
-              class="h-full w-full bg-black/70"
-              aria-label="Interactive robot scene"
-            ></canvas>
-          </div>
-        </div>
         </div>
       </div>
     </section>
     <div class="relative z-20">
-    <!-- Personal Information -->
-    <section class="aboutme-section-bg pt-20 pb-20 border-t text-white">
-      <div class="max-w-7xl mx-auto px-6 text-center">
-        <h2 class="text-4xl font-semibold mb-8">Tech Stack</h2>
-        <div class="aboutme-slides">
-          <div
-            v-for="(slide, index) in aboutSlides"
-            :key="slide.id"
-            :ref="(el) => setRevealEl(el)"
-            :class="['reveal', 'aboutme-slide', slide.widthClass]"
-            :style="{ transitionDelay: `${index * 180}ms` }"
-          >
-            <p class="aboutme-slide-title">{{ slide.title }}</p>
-            <p class="aboutme-slide-desc">{{ slide.description }}</p>
+      <!-- Personal Information -->
+      <section class="aboutme-section-bg pt-20 pb-20 border-t text-white">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+          <h2 class="text-4xl font-semibold mb-8">Tech Stack</h2>
+          <div class="aboutme-slides">
             <div
-              :ref="(el) => setAboutMarqueeMaskRef(slide.id, el)"
-              class="aboutme-marquee-mask"
-              :class="{ 'aboutme-marquee-mask--dragging': isAboutSlideDragging(slide.id) }"
-              @pointerdown="(e) => onAboutMarqueePointerDown(e, slide.id)"
+              v-for="(slide, index) in aboutSlides"
+              :key="slide.id"
+              :ref="(el) => setRevealEl(el)"
+              :class="['reveal', 'aboutme-slide', slide.widthClass]"
+              :style="{ transitionDelay: `${index * 180}ms` }"
             >
+              <p class="aboutme-slide-title">{{ slide.title }}</p>
+              <p class="aboutme-slide-desc">{{ slide.description }}</p>
               <div
-                class="aboutme-marquee-track"
-                :style="{ transform: `translateX(${getAboutSlideOffset(slide.id)}px)` }"
+                :ref="(el) => setAboutMarqueeMaskRef(slide.id, el)"
+                class="aboutme-marquee-mask"
+                :class="{ 'aboutme-marquee-mask--dragging': isAboutSlideDragging(slide.id) }"
+                @pointerdown="(e) => onAboutMarqueePointerDown(e, slide.id)"
               >
                 <div
-                  v-for="(logo, i) in slide.loop"
-                  :key="`${slide.id}-${logo.name}-${i}`"
-                  class="aboutme-logo-item"
+                  class="aboutme-marquee-track"
+                  :style="{ transform: `translateX(${getAboutSlideOffset(slide.id)}px)` }"
                 >
-                  <img
-                    :src="logo.src"
-                    :alt="logo.name"
-                    class="aboutme-logo-image"
-                    loading="lazy"
-                    draggable="false"
-                    @dragstart.prevent
-                  />
+                  <div
+                    v-for="(logo, i) in slide.loop"
+                    :key="`${slide.id}-${logo.name}-${i}`"
+                    class="aboutme-logo-item"
+                  >
+                    <img
+                      :src="logo.src"
+                      :alt="logo.name"
+                      class="aboutme-logo-image"
+                      loading="lazy"
+                      draggable="false"
+                      @dragstart.prevent
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Certificates / Highlights -->
-    <section class="py-20 border-t bg-black text-white">
-      <div class="max-w-6xl mx-auto px-6">
-        <h2 class="text-3xl font-semibold text-center mb-10">Certificates & Highlights</h2>
+      <!-- Certificates / Highlights -->
+      <section class="py-20 border-t bg-black text-white">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="text-3xl font-semibold text-center mb-10">Certificates & Highlights</h2>
 
-        <div class="grid sm:grid-cols-2 gap-7">
-          <article
-            v-for="(item, i) in highlights"
-            :key="item.title"
-            :ref="(el) => setRevealEl(el)"
-            class="reveal group overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
-          >
-            <!-- image -->
-            <button
-              type="button"
-              class="relative block w-full text-left cursor-pointer"
-              @click="openLightbox(item, i)"
+          <div class="grid sm:grid-cols-2 gap-7">
+            <article
+              v-for="(item, i) in highlights"
+              :key="item.title"
+              :ref="(el) => setRevealEl(el)"
+              class="reveal group overflow-hidden rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
             >
-              <img
-                :src="item.src"
-                :alt="item.title"
-                class="h-70 w-full object-cover object-top"
-                loading="lazy"
-              />
-              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition"></div>
-            </button>
-
-            <!-- content -->
-            <div class="p-6">
-              <h3 class="text-lg font-semibold leading-snug">{{ item.title }}</h3>
-              <p class="mt-2 text-sm text-white/70 leading-relaxed">
-                {{ item.description }}
-              </p>
-
-              <div class="mt-4 flex flex-wrap gap-2">
-                <span
-                  v-for="tag in item.tags"
-                  :key="tag"
-                  class="text-xs rounded-full bg-white/10 px-3 py-1 text-white/80"
-                >
-                  {{ tag }}
-                </span>
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-      <!-- Lightbox Modal -->
-      <div
-        v-if="lightbox.open"
-        class="fixed inset-0 z-[999] bg-black/30 backdrop-blur-sm"
-        @click.self="closeLightbox"
-      >
-        <div class="absolute inset-0 flex items-center justify-center p-4">
-          <div
-            class="relative w-full max-w-6xl max-h-[85vh] rounded-2xl bg-black/60 border border-white/10 overflow-hidden"
-          >
-            <!-- top bar -->
-            <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <div class="min-w-0">
-                <p class="truncate font-medium">{{ lightbox.title }}</p>
-                <p class="truncate text-xs text-white/60">{{ lightbox.description }}</p>
-              </div>
-              <!-- Close -->
+              <!-- image -->
               <button
                 type="button"
-                class="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-gray-200 cursor-pointer"
-                @click="closeLightbox"
-                aria-label="Close"
+                class="relative block w-full text-left cursor-pointer"
+                @click="openLightbox(item, i)"
               >
-                X
+                <img
+                  :src="item.src"
+                  :alt="item.title"
+                  class="h-70 w-full object-cover object-top"
+                  loading="lazy"
+                />
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition"></div>
               </button>
 
-              <!-- Prev -->
-              <button
-                class="absolute left-4 top-1/2 z-10 -translate-y-1/2 h-12 w-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-200 flex items-center justify-center text-2xl cursor-pointer"
-                @click.stop="prevImage"
-                aria-label="Previous"
-              >
-                <
-              </button>
+              <!-- content -->
+              <div class="p-6">
+                <h3 class="text-lg font-semibold leading-snug">{{ item.title }}</h3>
+                <p class="mt-2 text-sm text-white/70 leading-relaxed">
+                  {{ item.description }}
+                </p>
 
-              <!-- Next -->
-              <button
-                class="absolute right-4 top-1/2 z-10 -translate-y-1/2 h-12 w-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-200 flex items-center justify-center text-2xl cursor-pointer"
-                @click.stop="nextImage"
-                aria-label="Next"
-              >
-                >
-              </button>
-            </div>
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <span
+                    v-for="tag in item.tags"
+                    :key="tag"
+                    class="text-xs rounded-full bg-white/10 px-3 py-1 text-white/80"
+                  >
+                    {{ tag }}
+                  </span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+        <!-- Lightbox Modal -->
+        <div
+          v-if="lightbox.open"
+          class="fixed inset-0 z-[999] bg-black/30 backdrop-blur-sm"
+          @click.self="closeLightbox"
+        >
+          <div class="absolute inset-0 flex items-center justify-center p-4">
             <div
-              class="max-h-[calc(85vh-3.25rem)] overflow-auto p-4 flex items-center justify-center"
+              class="relative w-full max-w-6xl max-h-[85vh] rounded-2xl bg-black/60 border border-white/10 overflow-hidden"
             >
-              <img
-                :src="lightbox.src"
-                :alt="lightbox.title"
-                class="w-auto max-w-full max-h-[calc(85vh-3.25rem-2rem)] object-contain"
-                draggable="false"
-              />
+              <!-- top bar -->
+              <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div class="min-w-0">
+                  <p class="truncate font-medium">{{ lightbox.title }}</p>
+                  <p class="truncate text-xs text-white/60">{{ lightbox.description }}</p>
+                </div>
+                <!-- Close -->
+                <button
+                  type="button"
+                  class="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-lg hover:bg-gray-200 cursor-pointer"
+                  @click="closeLightbox"
+                  aria-label="Close"
+                >
+                  X
+                </button>
+
+                <!-- Prev -->
+                <button
+                  class="absolute left-4 top-1/2 z-10 -translate-y-1/2 h-12 w-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-200 flex items-center justify-center text-2xl cursor-pointer"
+                  @click.stop="prevImage"
+                  aria-label="Previous"
+                >
+                  <
+                </button>
+
+                <!-- Next -->
+                <button
+                  class="absolute right-4 top-1/2 z-10 -translate-y-1/2 h-12 w-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-200 flex items-center justify-center text-2xl cursor-pointer"
+                  @click.stop="nextImage"
+                  aria-label="Next"
+                >
+                  >
+                </button>
+              </div>
+              <div
+                class="max-h-[calc(85vh-3.25rem)] overflow-auto p-4 flex items-center justify-center"
+              >
+                <img
+                  :src="lightbox.src"
+                  :alt="lightbox.title"
+                  class="w-auto max-w-full max-h-[calc(85vh-3.25rem-2rem)] object-contain"
+                  draggable="false"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
-    <!-- Footer -->
-    <footer class="border-t py-8 text-center text-gray-500 text-sm">
-      © {{ new Date().getFullYear() }} Alan Tseng. All rights reserved.
-    </footer>
+      </section>
+      <!-- Footer -->
+      <footer class="border-t py-8 text-center text-gray-500 text-sm">
+        © {{ new Date().getFullYear() }} Alan Tseng. All rights reserved.
+      </footer>
     </div>
   </div>
 </template>
@@ -541,8 +541,8 @@ onBeforeUnmount(() => {
   opacity: 0;
   transform: translateY(0.9rem);
   transition:
-    opacity 2000ms ease,
-    transform 2000ms ease;
+    opacity 1000ms ease,
+    transform 1000ms ease;
 }
 
 .reveal--in {

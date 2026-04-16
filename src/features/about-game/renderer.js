@@ -166,6 +166,64 @@ function drawQuad(ctx, a, b, c, d, color, stroke = null) {
   }
 }
 
+function lerpPoint(a, b, t) {
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+  }
+}
+
+function drawLineWaveSeaSurface(ctx, a, b, c, d, time, stroke = null) {
+  const minX = Math.min(a.x, b.x, c.x, d.x)
+  const maxX = Math.max(a.x, b.x, c.x, d.x)
+  const minY = Math.min(a.y, b.y, c.y, d.y)
+  const maxY = Math.max(a.y, b.y, c.y, d.y)
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(a.x, a.y)
+  ctx.lineTo(b.x, b.y)
+  ctx.lineTo(c.x, c.y)
+  ctx.lineTo(d.x, d.y)
+  ctx.closePath()
+  ctx.clip()
+
+  const bg = ctx.createLinearGradient(minX, minY, maxX, maxY)
+  bg.addColorStop(0, '#2f7ebc')
+  bg.addColorStop(0.5, '#2a72ad')
+  bg.addColorStop(1, '#25679d')
+  ctx.fillStyle = bg
+  ctx.fillRect(minX, minY, maxX - minX, maxY - minY)
+
+  const lineCount = 7
+  for (let row = 0; row < lineCount; row += 1) {
+    const rowRatio = (row + 1) / (lineCount + 1)
+    const baseY = minY + (maxY - minY) * rowRatio
+    const amp = 3.4 + row * 0.45
+    const phase = time * 2 + row * 0.82
+    const freq = 0.025 + row * 0.0016
+
+    ctx.beginPath()
+    for (let x = minX - 8; x <= maxX + 8; x += 6) {
+      const y = baseY + Math.sin(x * freq + phase) * amp
+      if (x === minX - 8) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+
+    ctx.strokeStyle = `rgba(190,235,255,${Math.max(0.12, 0.28 - row * 0.024)})`
+    ctx.lineWidth = row % 2 === 0 ? 1.5 : 1.15
+    ctx.stroke()
+  }
+
+  if (stroke) {
+    ctx.strokeStyle = stroke
+    ctx.lineWidth = 1.2
+    ctx.stroke()
+  }
+
+  ctx.restore()
+}
+
 function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
   const words = text.split(/\s+/).filter(Boolean)
   if (!words.length) return 0
@@ -336,7 +394,7 @@ function drawStageSurfaces(ctx, camera, mode) {
   }
 }
 
-function drawOceans(ctx, camera, mode) {
+function drawOceans(ctx, camera, mode, time) {
   if (mode !== 'play') return
   if (FOCUS_STAGE_ID) return
   const oceanLevelY = 0
@@ -351,33 +409,80 @@ function drawOceans(ctx, camera, mode) {
     const c = projectPoint(oceanEnd, ISO.laneDepth, oceanLevelY, camera)
     const d = projectPoint(oceanStart, ISO.laneDepth, oceanLevelY, camera)
 
-    drawQuad(ctx, a, b, c, d, '#2f7ebc', 'rgba(255,255,255,0.2)')
+    drawLineWaveSeaSurface(ctx, a, b, c, d, time, 'rgba(255,255,255,0.2)')
     const cb = { x: c.x, y: c.y + oceanFrontDrop }
     const db = { x: d.x, y: d.y + oceanFrontDrop }
-    drawQuad(ctx, d, c, cb, db, 'rgba(17,74,119,0.78)', 'rgba(255,255,255,0.08)')
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.34)'
-    ctx.lineWidth = 1.4
-    for (let row = 0; row < 3; row += 1) {
-      const z = 38 + row * 34
-      ctx.beginPath()
-      for (let k = 0; k <= 12; k += 1) {
-        const x = oceanStart + ((oceanEnd - oceanStart) * k) / 12
-        const pt = projectPoint(x, z, oceanLevelY + Math.sin((k + row) * 0.7) * 1.4, camera)
-        if (k === 0) ctx.moveTo(pt.x, pt.y)
-        else ctx.lineTo(pt.x, pt.y)
-      }
-      ctx.stroke()
-    }
+    // Side face: deep-water base.
+    drawQuad(ctx, d, c, cb, db, 'rgba(58,110,146,0.86)', 'rgba(255,255,255,0.08)')
+
+    // Smooth beach-to-deep slope overlay, clipped to the side face.
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(d.x, d.y)
+    ctx.lineTo(c.x, c.y)
+    ctx.lineTo(cb.x, cb.y)
+    ctx.lineTo(db.x, db.y)
+    ctx.closePath()
+    ctx.clip()
+
+    // Left smooth slope (beach tone fading into blue center).
+    const leftTopInner = lerpPoint(d, c, 0.22)
+    const leftBottomInner = lerpPoint(db, cb, 0.34)
+    const leftGrad = ctx.createLinearGradient(
+      (d.x + db.x) * 0.5,
+      (d.y + db.y) * 0.5,
+      (leftTopInner.x + leftBottomInner.x) * 0.5,
+      (leftTopInner.y + leftBottomInner.y) * 0.5,
+    )
+    leftGrad.addColorStop(0, 'rgba(196,174,122,0.94)')
+    leftGrad.addColorStop(0.6, 'rgba(185,166,118,0.45)')
+    leftGrad.addColorStop(1, 'rgba(185,166,118,0)')
+    ctx.beginPath()
+    ctx.moveTo(d.x, d.y)
+    ctx.lineTo(leftTopInner.x, leftTopInner.y)
+    ctx.lineTo(leftBottomInner.x, leftBottomInner.y)
+    ctx.lineTo(db.x, db.y)
+    ctx.closePath()
+    ctx.fillStyle = leftGrad
+    ctx.fill()
+
+    // Right smooth slope (beach tone fading into blue center).
+    const rightTopInner = lerpPoint(d, c, 0.78)
+    const rightBottomInner = lerpPoint(db, cb, 0.66)
+    const rightGrad = ctx.createLinearGradient(
+      (c.x + cb.x) * 0.5,
+      (c.y + cb.y) * 0.5,
+      (rightTopInner.x + rightBottomInner.x) * 0.5,
+      (rightTopInner.y + rightBottomInner.y) * 0.5,
+    )
+    rightGrad.addColorStop(0, 'rgba(196,174,122,0.94)')
+    rightGrad.addColorStop(0.6, 'rgba(185,166,118,0.45)')
+    rightGrad.addColorStop(1, 'rgba(185,166,118,0)')
+    ctx.beginPath()
+    ctx.moveTo(rightTopInner.x, rightTopInner.y)
+    ctx.lineTo(c.x, c.y)
+    ctx.lineTo(cb.x, cb.y)
+    ctx.lineTo(rightBottomInner.x, rightBottomInner.y)
+    ctx.closePath()
+    ctx.fillStyle = rightGrad
+    ctx.fill()
+    ctx.restore()
 
     const fishCount = 4
     for (let fish = 0; fish < fishCount; fish += 1) {
-      const t = (fish + 1) / (fishCount + 1)
-      const depth = (Math.sin((i + fish) * 1.7) + 1) * 0.5
+      const seed = ((i + 1) * 101 + (fish + 1) * 67) % 1000
+      const phase = seed * 0.019
+      const swimDir = seed % 2 === 0 ? 1 : -1
+      const speed = 0.07 + ((seed % 29) / 1000) * 3
+      const drift = (0.2 + ((seed % 530) / 1000) + time * speed * swimDir + 10) % 1
+      // Keep fish in deeper middle zone, away from sandy slope near shoreline.
+      const t = 0.3 + drift * 0.4
+      const depth = 0.45 + ((Math.sin(time * 1.4 + phase) + 1) * 0.5) * 0.5
       const topX = d.x + (c.x - d.x) * t
       const topY = d.y + (c.y - d.y) * t
-      const sideX = topX
-      const sideY = topY + 28 + depth * 62
+      const sideX = topX + Math.sin(time * 2.8 + phase) * 6
+      const sideY = topY + 34 + depth * 64 + Math.cos(time * 3.2 + phase) * 4
       const fishW = 16 + depth * 10
       const fishH = 6 + depth * 4
 
@@ -386,7 +491,7 @@ function drawOceans(ctx, camera, mode) {
       ctx.ellipse(sideX, sideY, fishW * 0.5, fishH * 0.5, 0, 0, Math.PI * 2)
       ctx.fill()
 
-      const tailDir = fish % 2 === 0 ? -1 : 1
+      const tailDir = swimDir > 0 ? -1 : 1
       ctx.beginPath()
       ctx.moveTo(sideX + tailDir * (fishW * 0.5), sideY)
       ctx.lineTo(sideX + tailDir * (fishW * 0.5 + 7), sideY - 4)
@@ -1221,7 +1326,7 @@ export function renderScene(ctx, state) {
   ctx.fillRect(0, 0, camera.w, camera.h)
 
   drawStageSurfaces(ctx, camera, mode)
-  drawOceans(ctx, camera, mode)
+  drawOceans(ctx, camera, mode, time)
 
   if (mode === 'intro') {
     drawPortal(ctx, camera, portal, world, sceneScale)
