@@ -412,7 +412,7 @@ async function initHeroSpline() {
 // highlights
 const highlights = [
   {
-    title: 'Azure Fundamentals (AZ-900)',
+    title: 'Microsoft Azure Fundamentals (AZ-900)',
     description: 'Microsoft Azure fundamentals certification.',
     src: new URL('../assets/Azure Fundamentals - AZ900.png', import.meta.url).href,
     tags: ['Azure', 'Cloud'],
@@ -422,6 +422,21 @@ const highlights = [
     description: 'Virtual experience program (job simulation certificate).',
     src: new URL('../assets/CommBank Job Simulation Certificate.png', import.meta.url).href,
     tags: ['Consulting', 'Industry'],
+  },
+  {
+    title: 'Nvidia Fundamentals of NLP and Transformers',
+    description: 'NVIDIA certificate covering NLP foundations and transformer-based models.',
+    src: new URL('../assets/NVIDIA_Fundamentals of NLP and Transformers.png', import.meta.url).href,
+    tags: ['Nvidia', 'NLP', 'Transformers'],
+  },
+  {
+    title: 'Nvidia Large Language Models and Generative AI Deployment',
+    description: 'NVIDIA certificate focused on LLM and generative AI deployment concepts.',
+    src: new URL(
+      '../assets/NVIDIA_Large Language Models and Generative AI Deployment.png',
+      import.meta.url,
+    ).href,
+    tags: ['Nvidia', 'LLM', 'Generative AI'],
   },
   {
     title: 'Monash IT Postgraduate Mentoring',

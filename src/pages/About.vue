@@ -58,7 +58,11 @@
       v-if="currentEarthImage && !mustRotatePhone"
       class="earth-panel absolute right-4 bottom-6 z-20"
     >
-      <img :src="currentEarthImage" :alt="`${currentEarthLabel} earth view`" class="earth-panel__image" />
+      <img
+        :src="currentEarthImage"
+        :alt="`${currentEarthLabel} earth view`"
+        class="earth-panel__image"
+      />
     </div>
   </section>
 </template>
@@ -206,8 +210,7 @@ onMounted(() => {
     ? 'Use Joystick to control the character🕹️'
     : 'Use keyboard to control the character⌨️'
   Swal.fire({
-    title: 'Welcome to the Journey',
-    html: controlHint,
+    title: controlHint,
     icon: 'info',
     confirmButtonText: 'Start',
     confirmButtonColor: '#1f477a',
