@@ -41,14 +41,14 @@
 
           <div class="grid gap-4 sm:grid-cols-2">
             <a
-              href="https://www.linkedin.com/in/alan-tseng-9a198a1b3/"
+              href="https://www.linkedin.com/in/alan-tseng-ntub01/"
               target="_blank"
               rel="noopener noreferrer"
               class="block rounded-2xl border border-white/15 bg-white/5 p-4 transition hover:border-white/35 hover:bg-white/10"
             >
               <p class="text-xs uppercase tracking-wide text-white/55">LinkedIn</p>
               <p class="mt-1 break-all text-base font-semibold">
-                linkedin.com/in/alan-tseng-9a198a1b3
+                linkedin.com/in/alan-tseng-ntub01/
               </p>
             </a>
 
