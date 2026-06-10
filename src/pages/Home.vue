@@ -27,51 +27,6 @@
       </div>
     </section>
     <div class="relative z-20">
-      <!-- Personal Information -->
-      <section class="aboutme-section-bg pt-20 pb-20 border-t text-white">
-        <div class="max-w-7xl mx-auto px-6 text-center">
-          <h2 class="text-4xl font-semibold mb-8">Tech Stack</h2>
-          <div class="aboutme-slides">
-            <div
-              v-for="(slide, index) in aboutSlides"
-              :key="slide.id"
-              :ref="(el) => setRevealEl(el)"
-              :class="['reveal', 'aboutme-slide', slide.widthClass]"
-              :style="{ transitionDelay: `${index * 180}ms` }"
-            >
-              <p class="aboutme-slide-title">{{ slide.title }}</p>
-              <p class="aboutme-slide-desc">{{ slide.description }}</p>
-              <div
-                :ref="(el) => setAboutMarqueeMaskRef(slide.id, el)"
-                class="aboutme-marquee-mask"
-                :class="{ 'aboutme-marquee-mask--dragging': isAboutSlideDragging(slide.id) }"
-                @pointerdown="(e) => onAboutMarqueePointerDown(e, slide.id)"
-              >
-                <div
-                  class="aboutme-marquee-track"
-                  :style="{ transform: `translateX(${getAboutSlideOffset(slide.id)}px)` }"
-                >
-                  <div
-                    v-for="(logo, i) in slide.loop"
-                    :key="`${slide.id}-${logo.name}-${i}`"
-                    class="aboutme-logo-item"
-                  >
-                    <img
-                      :src="logo.src"
-                      :alt="logo.name"
-                      class="aboutme-logo-image"
-                      loading="lazy"
-                      draggable="false"
-                      @dragstart.prevent
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- Certificates / Highlights -->
       <section class="py-20 border-t bg-black text-white">
         <div class="max-w-6xl mx-auto px-6">
@@ -172,6 +127,50 @@
                   class="w-auto max-w-full max-h-[calc(85vh-3.25rem-2rem)] object-contain"
                   draggable="false"
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Personal Information -->
+      <section class="aboutme-section-bg pt-20 pb-20 border-t text-white">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+          <h2 class="text-4xl font-semibold mb-8">Tech Stack</h2>
+          <div class="aboutme-slides">
+            <div
+              v-for="(slide, index) in aboutSlides"
+              :key="slide.id"
+              :ref="(el) => setRevealEl(el)"
+              :class="['reveal', 'aboutme-slide', slide.widthClass]"
+              :style="{ transitionDelay: `${index * 180}ms` }"
+            >
+              <p class="aboutme-slide-title">{{ slide.title }}</p>
+              <p class="aboutme-slide-desc">{{ slide.description }}</p>
+              <div
+                :ref="(el) => setAboutMarqueeMaskRef(slide.id, el)"
+                class="aboutme-marquee-mask"
+                :class="{ 'aboutme-marquee-mask--dragging': isAboutSlideDragging(slide.id) }"
+                @pointerdown="(e) => onAboutMarqueePointerDown(e, slide.id)"
+              >
+                <div
+                  class="aboutme-marquee-track"
+                  :style="{ transform: `translateX(${getAboutSlideOffset(slide.id)}px)` }"
+                >
+                  <div
+                    v-for="(logo, i) in slide.loop"
+                    :key="`${slide.id}-${logo.name}-${i}`"
+                    class="aboutme-logo-item"
+                  >
+                    <img
+                      :src="logo.src"
+                      :alt="logo.name"
+                      class="aboutme-logo-image"
+                      loading="lazy"
+                      draggable="false"
+                      @dragstart.prevent
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -415,19 +414,19 @@ const highlights = [
     title: 'Microsoft Azure Fundamentals (AZ-900)',
     description: 'Microsoft Azure fundamentals certification.',
     src: new URL('../assets/Azure Fundamentals - AZ900.png', import.meta.url).href,
-    tags: ['Azure', 'Cloud'],
+    tags: ['Microsoft', 'Azure', 'Cloud'],
+  },
+  {
+    title: 'NVIDIA Certified Associate: Generative AI and LLMs',
+    description: 'NVIDIA solutions with generative AI and LLM concepts.',
+    src: new URL('../assets/NVIDIACertifiedAssociateGenerativeAIandLLM.png', import.meta.url).href,
+    tags: ['NVIDIA', 'Generative AI', 'LLM'],
   },
   {
     title: 'CommBank Job Simulation',
     description: 'Virtual experience program (job simulation certificate).',
     src: new URL('../assets/CommBank Job Simulation Certificate.png', import.meta.url).href,
     tags: ['Consulting', 'Industry'],
-  },
-  {
-    title: 'Nvidia Fundamentals of NLP and Transformers',
-    description: 'NVIDIA certificate covering NLP foundations and transformer-based models.',
-    src: new URL('../assets/NVIDIA_Fundamentals of NLP and Transformers.png', import.meta.url).href,
-    tags: ['Nvidia', 'NLP', 'Transformers'],
   },
   {
     title: 'Nvidia Large Language Models and Generative AI Deployment',

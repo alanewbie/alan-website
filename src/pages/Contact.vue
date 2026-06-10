@@ -64,7 +64,9 @@
           </div>
           <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p class="text-xs uppercase tracking-wide text-white/55">More Info</p>
-            <p class="mt-2 text-sm text-white/75">Location: Melbourne, Australia</p>
+            <p class="mt-2 text-sm text-white/75">
+              Location: Melbourne, Australia / Taipei, Taiwan
+            </p>
             <p class="mt-1 text-sm text-white/75">Preferred employment type: Full-time</p>
           </div>
         </div>
