@@ -40,15 +40,6 @@ monashStoryImage.src = new URL('../../assets/game/monashpic.png', import.meta.ur
 const questionImage = new Image()
 questionImage.src = new URL('../../assets/game/question.png', import.meta.url).href
 
-const taiwanFlagImage = new Image()
-taiwanFlagImage.src = new URL('../../assets/game/Taiwan.png', import.meta.url).href
-const indonesiaFlagImage = new Image()
-indonesiaFlagImage.src = new URL('../../assets/game/Indonesia.png', import.meta.url).href
-const australiaFlagImage = new Image()
-australiaFlagImage.src = new URL('../../assets/game/Australia.png', import.meta.url).href
-
-let taiwanFlagFlippedImage = null
-let australiaFlagFlippedImage = null
 const FOCUS_STAGE_ID = null
 const INDONESIA_SCHOOL = {
   xOffset: 700,
@@ -101,38 +92,6 @@ function getSceneScale(camera) {
   const baseScale = Math.max(0.7, Math.min(0.9, rawScale))
   const mobileScaleFactor = isPhoneLikeCamera(camera) ? 4 / 5 : 1
   return baseScale * mobileScaleFactor
-}
-
-function createFlippedFlagImage(image) {
-  if (!image.complete || image.naturalWidth === 0) return null
-  const canvas = document.createElement('canvas')
-  canvas.width = image.naturalWidth
-  canvas.height = image.naturalHeight
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return null
-
-  ctx.translate(canvas.width, 0)
-  ctx.scale(-1, 1)
-  ctx.drawImage(image, 0, 0)
-  return canvas
-}
-
-function getFlippedFlagImage(stageId) {
-  if (stageId === 'melbourne-master') {
-    if (!australiaFlagFlippedImage) {
-      australiaFlagFlippedImage = createFlippedFlagImage(australiaFlagImage)
-    }
-    return australiaFlagFlippedImage || australiaFlagImage
-  }
-
-  if (stageId !== 'indonesia') {
-    if (!taiwanFlagFlippedImage) {
-      taiwanFlagFlippedImage = createFlippedFlagImage(taiwanFlagImage)
-    }
-    return taiwanFlagFlippedImage || taiwanFlagImage
-  }
-
-  return indonesiaFlagImage
 }
 
 function projectPoint(worldX, worldZ, worldY, camera) {
@@ -653,82 +612,6 @@ function drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel
   ctx.textAlign = 'center'
   ctx.fillText("What's the next journey?", x + cardW / 2, cardY + 28 * s)
   ctx.textAlign = 'left'
-}
-
-function getFlagConfig(stageId) {
-  if (stageId === 'indonesia') {
-    return {
-      image: getFlippedFlagImage(stageId),
-      width: 74,
-      height: 42,
-      wave: 5.8,
-      reverseSample: false,
-    }
-  }
-  if (stageId === 'melbourne-master') {
-    return {
-      image: getFlippedFlagImage(stageId),
-      width: 98,
-      height: 56,
-      wave: 4.2,
-      reverseSample: true,
-    }
-  }
-  return {
-    image: getFlippedFlagImage(stageId),
-    width: 92,
-    height: 52,
-    wave: 4.2,
-    reverseSample: true,
-  }
-}
-
-function drawWavingFlag(ctx, camera, poleWorldX, poleWorldZ, time, flagConfig, sceneScale) {
-  const poleHeight = 108 * sceneScale
-  const flagWidth = flagConfig.width * sceneScale
-  const flagHeight = flagConfig.height * sceneScale
-  const waveStrength = flagConfig.wave
-  const flagImage = flagConfig.image
-  const reverseSample = flagConfig.reverseSample
-  const srcWidth = flagImage?.naturalWidth ?? flagImage?.width ?? 0
-  const srcHeight = flagImage?.naturalHeight ?? flagImage?.height ?? 0
-  const isDrawable = srcWidth > 0 && srcHeight > 0
-
-  const base = projectPoint(poleWorldX, poleWorldZ, 0, camera)
-  const poleTop = { x: base.x, y: base.y - poleHeight }
-  ctx.fillStyle = '#4c4c4c'
-  ctx.fillRect(poleTop.x, poleTop.y, 4, poleHeight)
-
-  const strips = 18
-  for (let i = 0; i < strips; i += 1) {
-    const ratio = i / (strips - 1)
-    const wave = Math.sin(ratio * 8 - time * 5.5) * (waveStrength - ratio * 2.1)
-    const x = poleTop.x - ratio * flagWidth
-    const y = poleTop.y + 6 + wave
-    const sliceW = flagWidth / strips
-    const srcIndex = reverseSample ? strips - 1 - i : i
-    const srcX = (srcWidth / strips) * srcIndex
-    const srcW = srcWidth / strips
-    const drawW = sliceW + 1.2
-
-    if (isDrawable) {
-      ctx.drawImage(flagImage, srcX, 0, srcW, srcHeight, x - drawW, y, drawW, flagHeight)
-    }
-  }
-}
-
-function drawFlags(ctx, camera, mode, time, sceneScale) {
-  if (mode !== 'play') return
-  const flagEdgeOffset = 12
-  const flagTopDepth = 8
-
-  for (let i = 1; i < STAGES.length; i += 1) {
-    const stage = STAGES[i]
-    if (!isStageVisible(stage.id, mode)) continue
-    const poleWorldX = stage.start + flagEdgeOffset
-    const flagConfig = getFlagConfig(stage.id)
-    drawWavingFlag(ctx, camera, poleWorldX, flagTopDepth, time + i * 0.6, flagConfig, sceneScale)
-  }
 }
 
 function drawAirports(ctx, camera, mode, sceneScale) {
@@ -1335,7 +1218,6 @@ export function renderScene(ctx, state) {
     drawAirports(ctx, camera, mode, sceneScale)
     drawLandmarks(ctx, camera, world, sceneScale)
     drawNextJourneyHint(ctx, camera, mode, time)
-    drawFlags(ctx, camera, mode, time, sceneScale)
     drawAirportHintArrow(ctx, camera, currentStageIndex, time, travel, sceneScale)
   }
 
