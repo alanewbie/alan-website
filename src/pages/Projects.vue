@@ -148,6 +148,19 @@
             Click here to read the Taipei gov press release
           </a>
         </div>
+
+        <div v-if="project.links?.length" class="mt-6 flex flex-wrap gap-3">
+          <a
+            v-for="link in project.links"
+            :key="`${project.id}-${link.label}`"
+            :href="link.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center rounded-lg border border-cyan-200/45 bg-cyan-200/15 px-4 py-2 text-sm font-semibold text-cyan-50 hover:bg-cyan-200/25"
+          >
+            {{ link.label }}
+          </a>
+        </div>
       </article>
     </section>
 
@@ -194,6 +207,7 @@ const thesisPdfUrl = `${new URL('../assets/portfolio/AlanTseng-Thesis.pdf', impo
 const thesisImageUrl = new URL('../assets/portfolio/AlanThesis.png', import.meta.url).href
 const thesisCoverImageUrl = new URL('../assets/portfolio/AlanThesisCover.png', import.meta.url).href
 const taipei101ImageUrl = new URL('../assets/portfolio/Taipei101.png', import.meta.url).href
+const internalChatchatImageUrl = new URL('../assets/portfolio/Internal_Chatchat.png', import.meta.url).href
 
 const imageModal = reactive({
   open: false,
@@ -271,6 +285,44 @@ const starterProjects = [
     previewImageAlt: 'Taipei 101 project explanation',
     modalImage: taipei101ImageUrl,
     pressReleaseUrl: 'https://www.tcooc.gov.taipei/cp.aspx?n=C9498570CEBDE71D',
+  },
+  {
+    id: 'internal-chatchat',
+    title: 'Internal Chatchat',
+    badge: 'Full Stack AI',
+    shortIntro: 'A permission-controlled internal assistant for curated FAQs, documents, and files.',
+    overviewPlaceholder:
+      'Full-stack internal assistant built with React, Node.js, MySQL, and OpenAI. It combines curated FAQ retrieval, document-based RAG for PDFs and DOCX files, visual figure understanding for chart-heavy PDFs, and an approval-based file agent with admin controls, audit logs, and evaluation flows for FAQ routing and RAG answer quality.',
+    techSections: [
+      {
+        title: 'Application & Data',
+        items: ['React', 'Node.js', 'MySQL', 'OpenAI API'],
+      },
+      {
+        title: 'AI & Governance',
+        items: [
+          'Curated FAQ Retrieval',
+          'PDF / DOCX RAG',
+          'Visual Figure Understanding',
+          'Approval-Based File Agent',
+          'Audit Logs',
+          'Evaluation Flows',
+        ],
+      },
+    ],
+    previewImage: internalChatchatImageUrl,
+    previewImageAlt: 'Internal Chatchat assistant dashboard',
+    modalImage: internalChatchatImageUrl,
+    links: [
+      {
+        label: 'Click here to check the GIT repo',
+        url: 'https://github.com/alanewbie/Internal-chatchat',
+      },
+      {
+        label: 'Click here to watch the demo',
+        url: 'https://drive.google.com/file/d/16xrkf0R3T7B6cvG-mMP9PTRsHy5DFdTS/view?usp=sharing',
+      },
+    ],
   },
 ]
 </script>
