@@ -119,14 +119,14 @@
           </div>
         </div>
 
-        <div v-if="project.id === 'thesis'" class="mt-6 flex w-full items-center justify-between gap-3">
+        <div v-if="project.id === 'thesis'" class="mt-6 flex flex-wrap gap-3">
           <a
             :href="project.thesisReaderUrl"
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex items-center rounded-lg border border-cyan-200/45 bg-cyan-200/15 px-4 py-2 text-sm font-semibold text-cyan-50 hover:bg-cyan-200/25"
           >
-            Click here to read the Thesis
+            Read the Thesis
           </a>
           <a
             href="https://github.com/alanewbie/Australian-Legal-LLM-Benchmark"
@@ -134,7 +134,7 @@
             rel="noopener noreferrer"
             class="inline-flex items-center rounded-lg border border-cyan-200/45 bg-cyan-200/15 px-4 py-2 text-sm font-semibold text-cyan-50 hover:bg-cyan-200/25"
           >
-            Click here to check the GIT repo
+            Check the GIT repo
           </a>
         </div>
 
@@ -145,7 +145,7 @@
             rel="noopener noreferrer"
             class="inline-flex items-center rounded-lg border border-cyan-200/45 bg-cyan-200/15 px-4 py-2 text-sm font-semibold text-cyan-50 hover:bg-cyan-200/25"
           >
-            Click here to read the Taipei gov press release
+            Read the Taipei gov press release
           </a>
         </div>
 
@@ -207,7 +207,11 @@ const thesisPdfUrl = `${new URL('../assets/portfolio/AlanTseng-Thesis.pdf', impo
 const thesisImageUrl = new URL('../assets/portfolio/AlanThesis.png', import.meta.url).href
 const thesisCoverImageUrl = new URL('../assets/portfolio/AlanThesisCover.png', import.meta.url).href
 const taipei101ImageUrl = new URL('../assets/portfolio/Taipei101.png', import.meta.url).href
-const internalChatchatImageUrl = new URL('../assets/portfolio/Internal_Chatchat.png', import.meta.url).href
+const internalChatchatImageUrl = new URL(
+  '../assets/portfolio/Internal_Chatchat.png',
+  import.meta.url,
+).href
+const universalindoImageUrl = new URL('../assets/portfolio/universalindo.png', import.meta.url).href
 
 const imageModal = reactive({
   open: false,
@@ -290,7 +294,7 @@ const starterProjects = [
     id: 'internal-chatchat',
     title: 'Internal Chatchat',
     badge: 'Full Stack AI',
-    shortIntro: 'A permission-controlled internal assistant for curated FAQs, documents, and files.',
+    shortIntro: 'A permission-controlled internal agent.',
     overviewPlaceholder:
       'Full-stack internal assistant built with React, Node.js, MySQL, and OpenAI. It combines curated FAQ retrieval, document-based RAG for PDFs and DOCX files, visual figure understanding for chart-heavy PDFs, and an approval-based file agent with admin controls, audit logs, and evaluation flows for FAQ routing and RAG answer quality.',
     techSections: [
@@ -315,12 +319,39 @@ const starterProjects = [
     modalImage: internalChatchatImageUrl,
     links: [
       {
-        label: 'Click here to check the GIT repo',
+        label: 'Check the GIT repo',
         url: 'https://github.com/alanewbie/Internal-chatchat',
       },
       {
-        label: 'Click here to watch the demo',
+        label: 'Watch the demo',
         url: 'https://drive.google.com/file/d/16xrkf0R3T7B6cvG-mMP9PTRsHy5DFdTS/view?usp=sharing',
+      },
+    ],
+  },
+  {
+    id: 'universalindo',
+    title: 'Universalindo Website',
+    badge: 'WordPress',
+    shortIntro: 'Custom WordPress theme for PT Universalindo Footwear Prima.',
+    overviewPlaceholder:
+      'A lightweight Astra child theme for the PT Universalindo Footwear Prima website. The site keeps WordPress as the CMS/admin layer while the public experience is custom-coded with PHP templates, CSS, and vanilla JavaScript, including product pages, modals, carousel behavior, contact-form handling, Brevo email delivery, Rank Math SEO, and GitHub Actions deployment to Cloudways over SSH/rsync.',
+    techSections: [
+      {
+        title: 'Platform',
+        items: ['WordPress', 'Cloudways', 'Astra Child Theme', 'Rank Math SEO', 'Brevo API'],
+      },
+      {
+        title: 'Theme & Deployment',
+        items: ['PHP Templates', 'CSS', 'Vanilla JavaScript', 'HTML', 'GitHub Actions', 'SSH / rsync'],
+      },
+    ],
+    previewImage: universalindoImageUrl,
+    previewImageAlt: 'Universalindo website project screenshot',
+    modalImage: universalindoImageUrl,
+    links: [
+      {
+        label: 'Visit the website',
+        url: 'https://universalindo.com/',
       },
     ],
   },
