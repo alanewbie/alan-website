@@ -3,6 +3,7 @@ import {
   HOSPITAL,
   INDONESIA_TERRACES,
   MELBOURNE_ROAD_END_OFFSET,
+  MELBOURNE_VOLUNTEER,
   PORTAL,
   STAGES,
 } from './config'
@@ -37,6 +38,10 @@ const monash2Image = new Image()
 monash2Image.src = new URL('../../assets/game/monash2.png', import.meta.url).href
 const monashStoryImage = new Image()
 monashStoryImage.src = new URL('../../assets/game/monashpic.png', import.meta.url).href
+const volunteersImage = new Image()
+volunteersImage.src = new URL('../../assets/game/volunteers.png', import.meta.url).href
+const volunteersStoryImage = new Image()
+volunteersStoryImage.src = new URL('../../assets/game/volunteerspic.png', import.meta.url).href
 const questionImage = new Image()
 questionImage.src = new URL('../../assets/game/question.png', import.meta.url).href
 
@@ -434,10 +439,10 @@ function drawOceans(ctx, camera, mode, time) {
       const phase = seed * 0.019
       const swimDir = seed % 2 === 0 ? 1 : -1
       const speed = 0.07 + ((seed % 29) / 1000) * 3
-      const drift = (0.2 + ((seed % 530) / 1000) + time * speed * swimDir + 10) % 1
+      const drift = (0.2 + (seed % 530) / 1000 + time * speed * swimDir + 10) % 1
       // Keep fish in deeper middle zone, away from sandy slope near shoreline.
       const t = 0.3 + drift * 0.4
-      const depth = 0.45 + ((Math.sin(time * 1.4 + phase) + 1) * 0.5) * 0.5
+      const depth = 0.45 + (Math.sin(time * 1.4 + phase) + 1) * 0.5 * 0.5
       const topX = d.x + (c.x - d.x) * t
       const topY = d.y + (c.y - d.y) * t
       const sideX = topX + Math.sin(time * 2.8 + phase) * 6
@@ -557,6 +562,19 @@ function drawLandmarks(ctx, camera, world, sceneScale) {
       yOffset: -45,
       scale: sceneScale * 0.8,
     })
+    drawBillboard(
+      ctx,
+      volunteersImage,
+      camera,
+      melbourne.start + MELBOURNE_VOLUNTEER.xOffset,
+      MELBOURNE_VOLUNTEER.width,
+      MELBOURNE_VOLUNTEER.height,
+      {
+        worldZ: 120,
+        yOffset: -10,
+        scale: sceneScale * 0.8,
+      },
+    )
   }
 }
 
@@ -1088,6 +1106,59 @@ function drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, trav
   )
 }
 
+function drawVolunteerStoryCard(ctx, camera, player, world, currentStageIndex, travel, time) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'melbourne-master') return
+
+  const playerCenterX = player.x + player.w / 2
+  const volunteerCenter = stage.start + MELBOURNE_VOLUNTEER.xOffset
+  const centerBandHalf = MELBOURNE_VOLUNTEER.width * 0.1
+  const fadeMargin = 160
+  const dx = Math.abs(playerCenterX - volunteerCenter)
+
+  if (dx > centerBandHalf + fadeMargin) return
+
+  let alpha = 0
+  if (dx <= centerBandHalf) {
+    alpha = 1
+  } else {
+    const fadeOut = 1 - (dx - centerBandHalf) / fadeMargin
+    alpha = Math.max(0, Math.min(1, fadeOut))
+  }
+  if (alpha <= 0.01) return
+
+  const s = getStoryCardScale(camera)
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 560 * s
+  const cardH = 365 * s
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 455 * s - 48
+
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.25)
+
+  const imageW = 310 * s
+  const imageH = 174 * s
+  const imageX = x + (cardW - imageW) / 2
+  const imageY = cardY + 22 * s
+  drawStoryImageWithOutline(ctx, volunteersStoryImage, imageX, imageY, imageW, imageH, alpha)
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  ctx.textAlign = 'center'
+  ctx.font = storyFont(700, 23, s)
+  ctx.fillText('Python, Java Engineering Roles', x + cardW / 2, cardY + 226 * s)
+  ctx.textAlign = 'left'
+  ctx.font = storyFont(600, 16, s)
+  drawWrappedText(
+    ctx,
+    'Right after graduation, contributed as a Python backend developer with Job Search Works and as a Java Software Engineer volunteer with Barayamal on project-based engineering work.',
+    x + 34 * s,
+    cardY + 258 * s,
+    cardW - 68 * s,
+    Math.max(17, Math.round(22 * s)),
+  )
+}
+
 function drawHospitalStoryCard(
   ctx,
   camera,
@@ -1242,6 +1313,7 @@ export function renderScene(ctx, state) {
   drawMilitaryStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
+  drawVolunteerStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel, time)
   drawArrivalSplash(ctx, camera, arrivalSplash)
 

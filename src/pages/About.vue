@@ -279,7 +279,7 @@ onBeforeUnmount(() => {
 }
 
 .earth-panel {
-  width: 16rem;
+  width: 32rem;
 }
 
 .earth-panel__image {

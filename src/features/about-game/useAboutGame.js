@@ -4,6 +4,7 @@ import {
   HOSPITAL,
   INDONESIA_TERRACES,
   MELBOURNE_ROAD_END_OFFSET,
+  MELBOURNE_VOLUNTEER,
   PHYSICS,
   PLAYER,
   PORTAL,
@@ -82,6 +83,10 @@ function getStoryFocusZone(state) {
     const monashStudyCenter = stage.start + 470
     const monashStudyBandHalf = 260 * 0.1
     if (Math.abs(playerCenterX - monashStudyCenter) <= monashStudyBandHalf) return 'monashStudy'
+
+    const volunteerCenter = stage.start + MELBOURNE_VOLUNTEER.xOffset
+    const volunteerBandHalf = MELBOURNE_VOLUNTEER.width * 0.1
+    if (Math.abs(playerCenterX - volunteerCenter) <= volunteerBandHalf) return 'barayamalVolunteer'
   }
 
   return null
@@ -165,6 +170,7 @@ export function useAboutGame(canvasRef) {
       military: false,
       company: false,
       monashStudy: false,
+      barayamalVolunteer: false,
     },
     sprites: loadCharacterSprites(),
   }
@@ -305,6 +311,7 @@ export function useAboutGame(canvasRef) {
     state.seenAutoJumpZones.military = false
     state.seenAutoJumpZones.company = false
     state.seenAutoJumpZones.monashStudy = false
+    state.seenAutoJumpZones.barayamalVolunteer = false
     updateCharacter()
     syncHud()
   }
@@ -332,6 +339,7 @@ export function useAboutGame(canvasRef) {
     state.seenAutoJumpZones.military = false
     state.seenAutoJumpZones.company = false
     state.seenAutoJumpZones.monashStudy = false
+    state.seenAutoJumpZones.barayamalVolunteer = false
     showArrivalSplash(state.currentStageIndex)
     updateCharacter()
     syncHud()
