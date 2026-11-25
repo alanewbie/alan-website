@@ -1,12 +1,24 @@
 <template>
   <div class="min-h-screen">
-    <!-- Hero Section (Interactive robot) -->
+    <!-- Hero Section -->
     <section class="relative w-full min-h-[26rem] h-[58vh] max-h-[40rem]">
       <div class="fixed left-0 right-0 top-16 z-0">
         <div class="relative w-full overflow-hidden min-h-[26rem] h-[58vh] max-h-[40rem] bg-black">
-          <div class="absolute inset-0 bg-gradient-to-r from-black via-black/95 to-black/80"></div>
+          <video
+            class="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-60"
+            autoplay
+            loop
+            muted
+            playsinline
+            disablepictureinpicture
+            tabindex="-1"
+            aria-hidden="true"
+          >
+            <source :src="heroVideoUrl" type="video/mp4" />
+          </video>
+          <div class="absolute inset-0 bg-black/25"></div>
           <div
-            class="relative z-10 mx-auto grid h-full w-full max-w-7xl items-center gap-6 px-6 pt-8 md:grid-cols-2"
+            class="relative z-10 mx-auto flex h-full w-full max-w-7xl items-center px-6 pt-8"
           >
             <div class="text-center text-white md:text-left">
               <h1 class="text-2xl sm:text-3xl font-bold mb-1">Hello, this is</h1>
@@ -14,13 +26,6 @@
               <p class="text-xl sm:text-2xl md:text-3xl">
                 AI / SaaS {{ typedText }}<span class="cursor">|</span>
               </p>
-            </div>
-            <div class="relative self-end h-[20rem] sm:h-[24rem] md:h-full">
-              <canvas
-                ref="heroSplineCanvasRef"
-                class="h-full w-full bg-black/70"
-                aria-label="Interactive robot scene"
-              ></canvas>
             </div>
           </div>
         </div>
@@ -186,11 +191,8 @@
 
 <script setup>
 import { reactive, ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { Application } from '@splinetool/runtime'
-
-const heroSplineCanvasRef = ref(null)
-const heroSplineSceneUrl = 'https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode'
-let heroSplineApp = null
+const heroVideoUrl = new URL('../assets/50a38de2-efd4-4652-90aa-6d22dfee8830.mp4', import.meta.url)
+  .href
 const roles = ['Technical Presales', 'Software Developer', 'Business Development']
 const aboutLogoModules = import.meta.glob('../assets/aboutme/**/*.{png,jpg,jpeg,webp,svg}', {
   eager: true,
@@ -400,14 +402,6 @@ const setRevealEl = (el) => {
 
 let observer = null
 
-async function initHeroSpline() {
-  const canvas = heroSplineCanvasRef.value
-  if (!canvas) return
-
-  heroSplineApp = new Application(canvas)
-  await heroSplineApp.load(heroSplineSceneUrl)
-}
-
 // highlights
 const highlights = [
   {
@@ -509,7 +503,6 @@ function onKeydown(e) {
 }
 
 onMounted(async () => {
-  await initHeroSpline()
   typeEffect()
   await nextTick()
   aboutSlides.forEach((slide) => ensureAboutSlideState(slide.id))
@@ -546,7 +539,6 @@ onBeforeUnmount(() => {
   observer?.disconnect()
   if (typingTimer) window.clearTimeout(typingTimer)
   if (marqueeRaf) window.cancelAnimationFrame(marqueeRaf)
-  if (heroSplineApp && typeof heroSplineApp.dispose === 'function') heroSplineApp.dispose()
 })
 </script>
 
