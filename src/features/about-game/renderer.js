@@ -4,6 +4,7 @@ import {
   INDONESIA_TERRACES,
   MELBOURNE_ROAD_END_OFFSET,
   MELBOURNE_VOLUNTEER,
+  MINT_DESTINATION,
   PORTAL,
   STAGES,
 } from './config'
@@ -42,6 +43,10 @@ const volunteersImage = new Image()
 volunteersImage.src = new URL('../../assets/game/volunteers.png', import.meta.url).href
 const volunteersStoryImage = new Image()
 volunteersStoryImage.src = new URL('../../assets/game/volunteerspic.png', import.meta.url).href
+const mintImage = new Image()
+mintImage.src = new URL('../../assets/game/The_Mint.png', import.meta.url).href
+const mintStoryImage = new Image()
+mintStoryImage.src = new URL('../../assets/game/The_Mintpic.jpg', import.meta.url).href
 const questionImage = new Image()
 questionImage.src = new URL('../../assets/game/question.png', import.meta.url).href
 
@@ -574,6 +579,19 @@ function drawLandmarks(ctx, camera, world, sceneScale) {
         yOffset: -10,
         scale: sceneScale * 0.8,
       },
+    )
+  }
+
+  const mint = STAGES.find((s) => s.id === 'melbourne-master')
+  if (mint && isStageVisible('melbourne-master', 'play')) {
+    drawBillboard(
+      ctx,
+      mintImage,
+      camera,
+      mint.start + MINT_DESTINATION.xOffset,
+      MINT_DESTINATION.width,
+      MINT_DESTINATION.height,
+      { yOffset: -10, scale: sceneScale * 0.9 },
     )
   }
 }
@@ -1159,6 +1177,59 @@ function drawVolunteerStoryCard(ctx, camera, player, world, currentStageIndex, t
   )
 }
 
+function drawMintStoryCard(ctx, camera, player, currentStageIndex, travel, time) {
+  if (travel?.active) return
+  const stage = STAGES[currentStageIndex]
+  if (!stage || stage.id !== 'melbourne-master') return
+
+  const playerCenterX = player.x + player.w / 2
+  const destinationCenter = stage.start + MINT_DESTINATION.xOffset
+  const fadeMargin = 180
+  const dx = Math.abs(playerCenterX - destinationCenter)
+  if (dx > fadeMargin) return
+
+  const alpha = Math.max(0, 1 - dx / fadeMargin)
+  if (alpha <= 0.01) return
+
+  const s = getStoryCardScale(camera)
+  const anchor = projectPoint(playerCenterX, 110, 0, camera)
+  const cardW = 480 * s
+  const cardH = 320 * s
+  const x = anchor.x - cardW / 2
+  const y = anchor.y - 455 * s - 48
+  const cardY = drawStoryCardChrome(ctx, x, y, cardW, cardH, alpha, time, 1.4)
+
+  const imageMaxW = 260 * s
+  const imageMaxH = 146 * s
+  const aspect = mintStoryImage.naturalWidth / mintStoryImage.naturalHeight || imageMaxW / imageMaxH
+  const imageW = Math.min(imageMaxW, imageMaxH * aspect)
+  const imageH = imageW / aspect
+  drawStoryImageWithOutline(
+    ctx,
+    mintStoryImage,
+    x + (cardW - imageW) / 2,
+    cardY + 22 * s,
+    imageW,
+    imageH,
+    alpha,
+  )
+
+  ctx.fillStyle = `rgba(24,24,24,${0.96 * alpha})`
+  ctx.textAlign = 'center'
+  ctx.font = storyFont(700, 23, s)
+  ctx.fillText('AI Project Officer', x + cardW / 2, cardY + 194 * s)
+  ctx.textAlign = 'left'
+  ctx.font = storyFont(600, 16, s)
+  drawWrappedText(
+    ctx,
+    'At Museums of History NSW, I research, develop, and support AI-enabled tools and digital solutions to streamline workflows and improve access to collections and archives.',
+    x + 34 * s,
+    cardY + 222 * s,
+    cardW - 52 * s,
+    Math.max(17, Math.round(22 * s)),
+  )
+}
+
 function drawHospitalStoryCard(
   ctx,
   camera,
@@ -1314,6 +1385,7 @@ export function renderScene(ctx, state) {
   drawCompanyStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawMonashStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
   drawVolunteerStoryCard(ctx, camera, player, world, currentStageIndex, travel, time)
+  drawMintStoryCard(ctx, camera, player, currentStageIndex, travel, time)
   drawNextJourneyStoryCard(ctx, camera, player, currentStageIndex, travel, time)
   drawArrivalSplash(ctx, camera, arrivalSplash)
 

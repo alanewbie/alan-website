@@ -57,7 +57,7 @@ export const STAGES = [
     splashYear: '2024',
     splashCountry: 'Australia',
     start: 6750,
-    end: 8350,
+    end: 9300,
     skyTop: '#8fc8ff',
     skyBottom: '#dbeeff',
     ground: '#6f9f7a',
@@ -97,6 +97,11 @@ export const MELBOURNE_VOLUNTEER = {
   xOffset: 870,
   width: 570,
   height: 380,
+}
+export const MINT_DESTINATION = {
+  xOffset: 1460,
+  width: 350,
+  height: 250,
 }
 
 export const HOSPITAL = {

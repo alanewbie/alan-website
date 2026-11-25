@@ -5,6 +5,7 @@ import {
   INDONESIA_TERRACES,
   MELBOURNE_ROAD_END_OFFSET,
   MELBOURNE_VOLUNTEER,
+  MINT_DESTINATION,
   PHYSICS,
   PLAYER,
   PORTAL,
@@ -87,6 +88,9 @@ function getStoryFocusZone(state) {
     const volunteerCenter = stage.start + MELBOURNE_VOLUNTEER.xOffset
     const volunteerBandHalf = MELBOURNE_VOLUNTEER.width * 0.1
     if (Math.abs(playerCenterX - volunteerCenter) <= volunteerBandHalf) return 'barayamalVolunteer'
+
+    const mintCenter = stage.start + MINT_DESTINATION.xOffset
+    if (Math.abs(playerCenterX - mintCenter) <= MINT_DESTINATION.width * 0.1) return 'mint'
   }
 
   return null
@@ -171,6 +175,7 @@ export function useAboutGame(canvasRef) {
       company: false,
       monashStudy: false,
       barayamalVolunteer: false,
+      mint: false,
     },
     sprites: loadCharacterSprites(),
   }
@@ -260,7 +265,7 @@ export function useAboutGame(canvasRef) {
       return
     }
 
-    helperLabel.value = 'You reached the current chapter in Melbourne.'
+    helperLabel.value = 'You reached the latest destination.'
   }
 
   function resizeCanvas() {
@@ -312,6 +317,7 @@ export function useAboutGame(canvasRef) {
     state.seenAutoJumpZones.company = false
     state.seenAutoJumpZones.monashStudy = false
     state.seenAutoJumpZones.barayamalVolunteer = false
+    state.seenAutoJumpZones.mint = false
     updateCharacter()
     syncHud()
   }
@@ -340,6 +346,7 @@ export function useAboutGame(canvasRef) {
     state.seenAutoJumpZones.company = false
     state.seenAutoJumpZones.monashStudy = false
     state.seenAutoJumpZones.barayamalVolunteer = false
+    state.seenAutoJumpZones.mint = false
     showArrivalSplash(state.currentStageIndex)
     updateCharacter()
     syncHud()
